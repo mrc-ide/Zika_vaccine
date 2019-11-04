@@ -1,5 +1,6 @@
 
-devtools::load_all()
+devtools::install_github("mrc-ide/ZikaModel")
+library(ZikaModel)
 
 out_dir <- file.path("figures", "deterministic_no_seasonality")
 

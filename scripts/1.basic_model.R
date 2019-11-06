@@ -6,7 +6,7 @@ library(ZikaModel)
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic")
+out_dir <- file.path("figures", "deterministic_no_seasonality")
 
 agec <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -36,11 +36,7 @@ create_generator <- create_r_model(odin_model_path = odin_model_path,
                                    agec = agec,
                                    death = death,
                                    nn_links = nn_links,
-                                   DT = my_dt,
-                                   season = TRUE,
-                                   Wb_starttime = 1,
-                                   Wb_introduration = 60,
-                                   Wb_introlevel = 0.25)
+                                   DT = my_dt)
 
 gen <- create_generator$generator(user = create_generator$state)
 

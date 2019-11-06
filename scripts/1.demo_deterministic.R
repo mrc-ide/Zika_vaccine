@@ -1,8 +1,12 @@
+# if (!require("ZikaModel")) devtools::install_github("mrc-ide/ZikaModel")
+# library(ZikaModel)
+devtools::load_all()
 
-devtools::install_github("mrc-ide/ZikaModel")
-library(ZikaModel)
 
-out_dir <- file.path("figures", "deterministic_no_seasonality")
+# define parameters -----------------------------------------------------------
+
+
+out_dir <- file.path("figures", "deterministic_wol_introlevel0.25_dur400")
 
 agec <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -18,78 +22,105 @@ death <- c(1e-10,
            0.279105747097929,
            0.390197266957464)
 
-integer_time_steps <- 364 * 100
+time_years <- 50 # years
 
-mpl <- model_param_list_create(season = FALSE)
+my_dt <- 0.5
 
-# generate initial state variables from equilibrium solution
-state_init <- equilibrium_init_create(agec = agec,
-                                      death = death,
-                                      nn_links = nn_links,
-                                      model_parameter_list = mpl)
+
+# run -------------------------------------------------------------------------
+
 
 odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
 
-gen <- odin::odin(odin_model_path,verbose = FALSE)
+create_generator <- create_r_model(odin_model_path = odin_model_path,
+                                   agec = agec,
+                                   death = death,
+                                   nn_links = nn_links,
+                                   DT = my_dt,
+                                   season = TRUE,
+                                   Wb_starttime = 1,
+                                   Wb_introduration = 60,
+                                   Wb_introlevel = 0.25)
 
-state_use <- state_init[names(state_init) %in% names(formals(gen))]
+gen <- create_generator$generator(user = create_generator$state)
 
-mod <- gen(user = state_use)
+integer_time_steps <- (364 * time_years) / my_dt
 
 its <- seq(0, integer_time_steps, 1)
 
-mod_run <- mod$run(its)
+mod_run <- gen$run(its)
 
-# shape output
-out <- mod$transform_variables(mod_run)
+
+# post processing -------------------------------------------------------------
+
+
+out <- gen$transform_variables(mod_run)
+
+out_2 <- post_processing(out)
+
+p1 <- plot_compartments(out_2$compartments)
+
+save_plot(plot_obj = p1,
+          out_pth = out_dir,
+          out_fl_nm = "human_compartments.png",
+          wdt = 14,
+          hgt = 9)
+
+p2 <- plot_demographics(out_2$demographics)
+
+lapply(seq_along(p2),
+       wrapper_to_save_plot,
+       p2,
+       out_fl_nm = "human_demographics",
+       out_pth = out_dir,
+       wdt = 18,
+       hgt = 10)
+
+
+# extract mosquitoes diagnostics ----------------------------------------------
+
+
+diagno_mos_wt <- c("Lwt", "Mwt_S", "Mwt_E1", "Mwt_E2", "Mwt_I1", "Mwt_tot", "Lwt_birth",
+                   "Lwt_mature", "Mwt_inf1", "Mwt_propinf")
+
+diagno_mos_wb <- c("Lwb", "Mwb_S", "Mwb_E1", "Mwb_E2", "Mwb_I1", "Mwb_tot", "Lwb_birth",
+                   "Lwb_mature", "Mwb_inf1", "Mwb_propinf", "Mwb_intro", "prop_wb", "M_propinf")
+
+extra_diagno <- "MwtCont"
+
+diagno_mos <- c(diagno_mos_wt, diagno_mos_wb)
+
+dia_mos <- setNames(out[diagno_mos], diagno_mos)
+
+mossum <- lapply(dia_mos, function(x){apply(x, 1, sum)})
+
+mat_M <- do.call("cbind", mossum)
+
+df_M <- as.data.frame(mat_M)
+
+df_M[, extra_diagno] <- out[extra_diagno]
 
 tt <- out$TIME
 time <- max(tt)
 
-diagno_hum <- c("S", "I1", "R1", "births", "inf_1", "Y1T", "infectious1", "O_S")
-
-dia_hum <- setNames(out[diagno_hum], diagno_hum)
-
-# cum sum over the first dimension - specify the dims you want to keep
-# no need for aperm reshaping here
-inf_1_cum <- apply(dia_hum$inf_1, c(2, 3, 4), cumsum)
-
-Nt <- dia_hum$S + dia_hum$I1 + dia_hum$R1
-
-dia_hum <- c(dia_hum,
-             list(Nt = Nt),
-             list(inf_1_cum = inf_1_cum))
-
-humsum <- lapply(dia_hum, function(x){apply(x, 1, sum)})
-
-mat_H <- do.call("cbind", humsum)
-
-prop <- mat_H[, c("S", "I1", "R1")] / mat_H[, "Nt"]
-
-colnames(prop) <- c("Sp", "I1p", "R1p")
-
-mat_H <- cbind(mat_H, prop)
-
-df_H <- as.data.frame(mat_H)
-
-# rate of total weekly infections
-df_H$wIR_inf <- lag_diff(df_H$inf_1_cum, 14)
-
-df_H$wIR_inf <- df_H$wIR_inf / df_H$Nt * 1000
-
-df_H$time <- tt
-df_H_melt <- melt(df_H,
+df_M$time <- tt
+df_M_melt <- melt(df_M,
                   id.vars = "time",
                   variable.name = "diagnostic")
 
-diagno_levs <- c("S", "I1", "R1", "Nt", "births", "inf_1", "Y1T", "infectious1", "O_S", "inf_1_cum", "Sp", "I1p", "R1p", "wIR_inf")
+diagno_levs <- c(diagno_mos_wt, diagno_mos_wb, extra_diagno)
 
-df_H_melt$diagnostic <- factor(df_H_melt$diagnostic, levels = diagno_levs, labels = diagno_levs)
+df_M_melt$diagnostic <- factor(df_M_melt$diagnostic, levels = diagno_levs, labels = diagno_levs)
 
-plot_diagnostics(df_H_melt,
-                 out_dir,
-                 "human_diagnostics",
-                 diagno_levs)
+p3 <- plot_demographics(df_M_melt)
+
+lapply(seq_along(p3),
+       wrapper_to_save_plot,
+       p3,
+       out_fl_nm = "mosquitoes_demographics",
+       out_pth = out_dir,
+       wdt = 18,
+       hgt = 10)
 
 
 # -----------------------------------------------------------------------------
@@ -131,8 +162,8 @@ inf_1_patch_df <- as.data.frame(inf_1_patch)
 names(inf_1_patch_df) <- seq_len(21)
 inf_1_patch_df$time <- tt
 inf_1_patch_df_melt <- melt(inf_1_patch_df,
-                         id.vars = "time",
-                         variable.name = "patch")
+                            id.vars = "time",
+                            variable.name = "patch")
 
 p <- ggplot(inf_1_patch_df_melt) +
   geom_line(aes(x = time, y = value), colour = "#63B8FF") +
@@ -178,8 +209,8 @@ I1_patch_df <- as.data.frame(I1_patch)
 names(I1_patch_df) <- seq_len(21)
 I1_patch_df$time <- tt
 I1_patch_df_melt <- melt(I1_patch_df,
-                        id.vars = "time",
-                        variable.name = "patch")
+                         id.vars = "time",
+                         variable.name = "patch")
 
 p <- ggplot(I1_patch_df_melt) +
   geom_line(aes(x = time, y = value), colour = "#63B8FF") +
@@ -223,8 +254,8 @@ FOI1p_patch_df <- as.data.frame(out$FOI1p)
 names(FOI1p_patch_df) <- seq_len(21)
 FOI1p_patch_df$time <- tt
 FOI1p_patch_df_melt <- melt(FOI1p_patch_df,
-                         id.vars = "time",
-                         variable.name = "patch")
+                            id.vars = "time",
+                            variable.name = "patch")
 
 p <- ggplot(FOI1p_patch_df_melt) +
   geom_line(aes(x = time, y = value), colour = "#63B8FF") +
@@ -255,14 +286,14 @@ deathrt_age_df <- as.data.frame(out$deathrt)
 names(deathrt_age_df) <- seq_len(11)
 deathrt_age_df$time <- tt
 deathrt_age_df_melt <- melt(deathrt_age_df,
-                             id.vars = "time",
-                             variable.name = "age")
+                            id.vars = "time",
+                            variable.name = "age")
 
 p <- ggplot(deathrt_age_df_melt) +
   geom_line(aes(x = time, y = value), colour = "#63B8FF") +
   ggplot2::facet_wrap(~ age, ncol = 4#,
                       # scales = "free_y"
-                      ) +
+  ) +
   scale_y_continuous(name = "deathrt") +
   scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
   theme_bw() +
@@ -280,8 +311,8 @@ agert_age_df <- as.data.frame(out$agert)
 names(agert_age_df) <- seq_len(11)
 agert_age_df$time <- tt
 agert_age_df_melt <- melt(agert_age_df,
-                            id.vars = "time",
-                            variable.name = "age")
+                          id.vars = "time",
+                          variable.name = "age")
 
 p <- ggplot(agert_age_df_melt) +
   geom_line(aes(x = time, y = value), colour = "#63B8FF") +
@@ -392,8 +423,8 @@ O_S_full_melt <- melt(out$O_S)
 names(O_S_full_melt) <- c("time", "age", "vaccine", "patch", "value")
 O_S_full_melt$time <- tt_long
 O_S_full_melt$age <- factor(O_S_full_melt$age,
-                           levels = unique(O_S_full_melt$age),
-                           labels = unique(O_S_full_melt$age))
+                            levels = unique(O_S_full_melt$age),
+                            labels = unique(O_S_full_melt$age))
 
 O_S_melt <- subset(O_S_full_melt, vaccine == 1 & patch == 1)
 
@@ -416,8 +447,8 @@ inf_1_full_melt <- melt(out$inf_1)
 names(inf_1_full_melt) <- c("time", "age", "vaccine", "patch", "value")
 inf_1_full_melt$time <- tt_long
 inf_1_full_melt$age <- factor(inf_1_full_melt$age,
-                            levels = unique(inf_1_full_melt$age),
-                            labels = unique(inf_1_full_melt$age))
+                              levels = unique(inf_1_full_melt$age),
+                              labels = unique(inf_1_full_melt$age))
 
 inf_1_melt <- subset(inf_1_full_melt, vaccine == 1 & patch == 3)
 

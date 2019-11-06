@@ -1,12 +1,12 @@
-# if (!require("ZikaModel")) devtools::install_github("mrc-ide/ZikaModel")
-# library(ZikaModel)
-devtools::load_all()
+
+if (!require("ZikaModel")) devtools::install_github("mrc-ide/ZikaModel")
+library(ZikaModel)
 
 
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic_wol_introlevel0.25_dur400")
+out_dir <- file.path("figures", "deterministic")
 
 agec <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 

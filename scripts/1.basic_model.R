@@ -1,12 +1,19 @@
 
-if (!require("ZikaModel")) devtools::install_github("mrc-ide/ZikaModel")
+devtools::install_github("mrc-ide/ZikaModel")
+
 library(ZikaModel)
+library(reshape2)
+library(ggplot2)
+library(viridis)
+
+source(file.path("R", "wrapper_to_save_plot.R"))
+source(file.path("R", "save_plot.R"))
 
 
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic_no_seasonality")
+out_dir <- file.path("figures", "deterministic")
 
 agec <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -26,17 +33,18 @@ time_years <- 50 # years
 
 my_dt <- 0.5
 
+odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
+
 
 # run -------------------------------------------------------------------------
 
-
-odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
 
 create_generator <- create_r_model(odin_model_path = odin_model_path,
                                    agec = agec,
                                    death = death,
                                    nn_links = nn_links,
-                                   DT = my_dt)
+                                   DT = my_dt,
+                                   season = TRUE)
 
 gen <- create_generator$generator(user = create_generator$state)
 
@@ -73,52 +81,6 @@ lapply(seq_along(p2),
        hgt = 10)
 
 
-# extract mosquitoes diagnostics ----------------------------------------------
-
-
-diagno_mos_wt <- c("Lwt", "Mwt_S", "Mwt_E1", "Mwt_E2", "Mwt_I1", "Mwt_tot", "Lwt_birth",
-                   "Lwt_mature", "Mwt_inf1", "Mwt_propinf")
-
-diagno_mos_wb <- c("Lwb", "Mwb_S", "Mwb_E1", "Mwb_E2", "Mwb_I1", "Mwb_tot", "Lwb_birth",
-                   "Lwb_mature", "Mwb_inf1", "Mwb_propinf", "Mwb_intro", "prop_wb", "M_propinf")
-
-extra_diagno <- "MwtCont"
-
-diagno_mos <- c(diagno_mos_wt, diagno_mos_wb)
-
-dia_mos <- setNames(out[diagno_mos], diagno_mos)
-
-mossum <- lapply(dia_mos, function(x){apply(x, 1, sum)})
-
-mat_M <- do.call("cbind", mossum)
-
-df_M <- as.data.frame(mat_M)
-
-df_M[, extra_diagno] <- out[extra_diagno]
-
-tt <- out$TIME
-time <- max(tt)
-
-df_M$time <- tt
-df_M_melt <- melt(df_M,
-                  id.vars = "time",
-                  variable.name = "diagnostic")
-
-diagno_levs <- c(diagno_mos_wt, diagno_mos_wb, extra_diagno)
-
-df_M_melt$diagnostic <- factor(df_M_melt$diagnostic, levels = diagno_levs, labels = diagno_levs)
-
-p3 <- plot_demographics(df_M_melt)
-
-lapply(seq_along(p3),
-       wrapper_to_save_plot,
-       p3,
-       out_fl_nm = "mosquitoes_demographics",
-       out_pth = out_dir,
-       wdt = 18,
-       hgt = 10)
-
-
 # -----------------------------------------------------------------------------
 #
 # Plot diagnostics by patch
@@ -126,11 +88,13 @@ lapply(seq_along(p3),
 # -----------------------------------------------------------------------------
 
 
+tt <- out$TIME
+time <- max(tt)
+
 out_dir_1 <- file.path(out_dir, "patch")
 brks <- seq(from = 0, to = time, by = 364 * 5)
 
-# sum across ages and vaccine status (dims 2 and 3)
-births_patch_df <- as.data.frame(dia_hum$births)
+births_patch_df <- as.data.frame(out$births)
 names(births_patch_df) <- seq_len(21)
 births_patch_df$time <- tt
 births_patch_df_melt <- melt(births_patch_df,
@@ -153,7 +117,7 @@ save_plot(p,
           hgt = 15)
 
 # sum across ages and vaccine status (dims 2 and 3)
-inf_1_patch <- apply(dia_hum$inf_1, c(1, 4), sum)
+inf_1_patch <- apply(out$inf_1, c(1, 4), sum)
 inf_1_patch_df <- as.data.frame(inf_1_patch)
 names(inf_1_patch_df) <- seq_len(21)
 inf_1_patch_df$time <- tt
@@ -176,8 +140,7 @@ save_plot(p,
           wdt = 15,
           hgt = 15)
 
-# sum across ages and vaccine status (dims 2 and 3)
-S_patch <- apply(dia_hum$S, c(1, 4), sum)
+S_patch <- apply(out$S, c(1, 4), sum)
 S_patch_df <- as.data.frame(S_patch)
 names(S_patch_df) <- seq_len(21)
 S_patch_df$time <- tt
@@ -200,7 +163,7 @@ save_plot(p,
           wdt = 15,
           hgt = 15)
 
-I1_patch <- apply(dia_hum$I1, c(1, 4), sum)
+I1_patch <- apply(out$I1, c(1, 4), sum)
 I1_patch_df <- as.data.frame(I1_patch)
 names(I1_patch_df) <- seq_len(21)
 I1_patch_df$time <- tt
@@ -223,7 +186,7 @@ save_plot(p,
           wdt = 15,
           hgt = 15)
 
-R1_patch <- apply(dia_hum$R1, c(1, 4), sum)
+R1_patch <- apply(out$R1, c(1, 4), sum)
 R1_patch_df <- as.data.frame(R1_patch)
 names(R1_patch_df) <- seq_len(21)
 R1_patch_df$time <- tt
@@ -329,13 +292,11 @@ save_plot(p,
 
 # -----------------------------------------------------------------------------
 #
-# Plot diagnostics by all
+# Plot diagnostics by patch, age group and vaccine status
 #
 # -----------------------------------------------------------------------------
 
 
-
-library(viridis)
 
 O_S_prob_full_melt <- melt(out$O_S_prob)
 names(O_S_prob_full_melt) <- c("time", "age", "vaccine", "patch", "value")
@@ -462,17 +423,3 @@ save_plot(p,
           out_fl_nm = sprintf("inf_1_vaccine_%s_patch_%s.png", 1, 3),
           wdt = 10,
           hgt = 8)
-
-model_run <- ZikaModel::run_model(agec,
-                                  death,
-                                  nn_links,
-                                  time = time,
-                                  season = TRUE)
-#
-# save_plot(model_run$plot,
-#           out_dir,
-#           "compartments_human",
-#           wdt = 17,
-#           hgt = 12)
-#
-# post_processing(model_run$dat, out_dir)

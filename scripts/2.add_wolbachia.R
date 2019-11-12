@@ -14,7 +14,7 @@ source(file.path("R", "reshape.R"))
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic_wol_2")
+out_dir <- file.path("figures", "deterministic_wol_3")
 
 agec <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -32,13 +32,13 @@ death <- c(1e-10,
 
 time_years <- 50 # years
 
-my_dt <- 0.5
+my_dt <- 1
 
 odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
 
 Wb_starttime <- 1 # years
 Wb_introduration_days <- 30 # days
-Wb_introlevel <- 0.1 # proportion of the initial number of wt mosquitoes 
+Wb_introlevel <- 0.3 # proportion of the initial number of wt mosquitoes 
 
 Wb_introduration <- Wb_introduration_days / my_dt
 
@@ -71,7 +71,7 @@ mod_run <- gen$run(its)
 
 out <- gen$transform_variables(mod_run)
 
-out_2 <- post_processing(out)
+out_2 <- post_processing(out, my_dt)
 
 p1 <- plot_compartments(out_2$compartments)
 

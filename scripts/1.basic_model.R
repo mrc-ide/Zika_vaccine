@@ -13,7 +13,7 @@ source(file.path("R", "save_plot.R"))
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic")
+out_dir <- file.path("figures", "deterministic_1")
 
 agec <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -43,6 +43,7 @@ create_generator <- create_r_model(odin_model_path = odin_model_path,
                                    agec = agec,
                                    death = death,
                                    nn_links = nn_links,
+                                   amplitudes_phases = amplitudes_phases,
                                    DT = my_dt,
                                    season = TRUE)
 

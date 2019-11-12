@@ -2,7 +2,8 @@ wrapper_multi_factors_ZikaModel <- function(x,
                                             agec, 
                                             death,
                                             my_dt,
-                                            time_years) {
+                                            time_years,
+                                            season) {
   
   odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
   
@@ -23,8 +24,9 @@ wrapper_multi_factors_ZikaModel <- function(x,
                                                 agec = agec,
                                                 death = death,
                                                 nn_links = nn_links,
+                                                amplitudes_phases,
                                                 DT = my_dt,
-                                                season = TRUE,
+                                                season = season,
                                                 Wb_starttime = Wb_starttime,
                                                 Wb_introduration = Wb_introduration,
                                                 Wb_introlevel = Wb_introlevel)

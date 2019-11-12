@@ -1,10 +1,24 @@
-mean_across_patches <- function(out, var) {
+apply_mean_across_patches <- function(x){
   
-  ret1 <- apply(out[[var]][,1:20], 1, mean)
+  # browser()
   
-  data.frame(x = out$TIME, y = ret1)
+  apply(x, 1, mean_across_patches)
   
 }
+
+mean_across_patches <- function(x) {
+  
+  mean(x[1:20])
+  
+}
+
+# mean_across_patches <- function(out, var) {
+#   
+#   ret1 <- apply(out[[var]][,1:20], 1, mean)
+#   
+#   data.frame(x = out$TIME, y = ret1)
+#   
+# }
 
 reshape_by_patch <- function(var, out) {
   

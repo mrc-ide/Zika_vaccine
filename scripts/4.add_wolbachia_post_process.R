@@ -26,7 +26,7 @@ dat_m <- lapply(dat, apply_mean_across_patches)
 
 time_years <- 50
 
-my_dt <- 0.5
+my_dt <- 1
 
 integer_time_steps <- (364 * time_years) / my_dt
 

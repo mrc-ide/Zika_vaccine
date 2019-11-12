@@ -31,7 +31,7 @@ death <- c(1e-10,
 
 time_years <- 50 # years
 
-my_dt <- 0.5
+my_dt <- 1
 
 odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
 
@@ -61,7 +61,7 @@ mod_run <- gen$run(its)
 
 out <- gen$transform_variables(mod_run)
 
-out_2 <- post_processing(out)
+out_2 <- post_processing(out, my_dt)
 
 p1 <- plot_compartments(out_2$compartments)
 

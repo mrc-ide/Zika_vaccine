@@ -51,7 +51,7 @@ if (CLUSTER) {
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic_wol")
+season <- FALSE
 
 agec <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -73,11 +73,11 @@ my_dt <- 0.5
 
 Wb_starttime_values <- c(1, 5, 10, 20, 30) # years
 Wb_introduration_days_values <- c(15, 30, 60, 90) # days
-Wb_introlevel_values <- seq(0, 0.6, 0.2) # proportion of the initial number of wt mosquitoes 
+Wb_introlevel_values <- seq(0, 0.4, 0.1) # proportion of the initial number of wt mosquitoes 
 
 Wb_introduration_values <- Wb_introduration_days_values / my_dt
 
-out_dir <- "output"
+out_dir <- file.path("output", "wolbachia_factorial_exp")
 
 
 # generate all combinations of factors ----------------------------------------
@@ -105,7 +105,8 @@ fact_combs_ls <- df_to_list(fact_combs, TRUE)
 #   agec = agec,
 #   death = death,
 #   my_dt = my_dt,
-#   time_years = time_years))
+#   time_years = time_years,
+#   season = season))
 
 
 # run -------------------------------------------------------------------------
@@ -120,7 +121,8 @@ if (CLUSTER) {
     agec = agec,
     death = death,
     my_dt = my_dt,
-    time_years = time_years)
+    time_years = time_years,
+    season = season)
 
 } else {
 
@@ -131,8 +133,9 @@ if (CLUSTER) {
     death = death,
     my_dt = my_dt,
     time_years = time_years,
+    season = season,
     parallel = FALSE)
   
-  write_out_rds(ZikaModel_wolb_experiment, "output", "wolbachia_experiment.rds")
+  write_out_rds(ZikaModel_wolb_experiment, out_dir, "wolbachia_experiment.rds")
   
 }

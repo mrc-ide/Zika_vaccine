@@ -69,7 +69,7 @@ death <- c(1e-10,
 
 time_years <- 50 # years
 
-my_dt <- 0.5
+my_dt <- 1
 
 Wb_starttime_values <- c(1, 5, 10, 20, 30) # years
 Wb_introduration_days_values <- c(15, 30, 60, 90) # days

@@ -4,7 +4,6 @@ devtools::install_github("mrc-ide/ZikaModel")
 library(ZikaModel)
 library(reshape2)
 library(ggplot2)
-library(gridExtra)
 
 source(file.path("R", "save_plot.R"))
 source(file.path("R", "wrapper_to_save_plot.R"))

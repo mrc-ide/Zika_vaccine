@@ -82,6 +82,48 @@ lapply(seq_along(p2),
        hgt = 10)
 
 
+# extract mosquitoes diagnostics ----------------------------------------------
+
+
+diagno_mos_wt <- c("Lwt", "Mwt_S", "Mwt_E1", "Mwt_E2", "Mwt_I1", "Mwt_tot", "Lwt_birth",
+                   "Lwt_mature", "Mwt_inf1")
+
+diagno_mos_wb <- c("Lwb", "Mwb_S", "Mwb_E1", "Mwb_E2", "Mwb_I1", "Mwb_tot", "Lwb_birth",
+                   "Lwb_mature", "Mwb_inf1", "Mwb_intro")
+
+diagno_mos <- c(diagno_mos_wt, diagno_mos_wb)
+
+dia_mos <- setNames(out[diagno_mos], diagno_mos)
+
+mossum <- lapply(dia_mos, function(x){apply(x, 1, sum)})
+
+mat_M <- do.call("cbind", mossum)
+
+df_M <- as.data.frame(mat_M)
+
+tt <- out$TIME
+time <- max(tt)
+
+df_M$time <- tt
+df_M_melt <- melt(df_M,
+                  id.vars = "time",
+                  variable.name = "diagnostic")
+
+diagno_levs <- c(diagno_mos_wt, diagno_mos_wb)
+
+df_M_melt$diagnostic <- factor(df_M_melt$diagnostic, levels = diagno_levs, labels = diagno_levs)
+
+p3 <- plot_demographics(df_M_melt)
+
+lapply(seq_along(p3),
+       wrapper_to_save_plot,
+       p3,
+       out_fl_nm = "mosquitoes_demographics",
+       out_pth = out_dir,
+       wdt = 18,
+       hgt = 10)
+
+
 # -----------------------------------------------------------------------------
 #
 # Plot diagnostics by patch

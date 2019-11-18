@@ -5,6 +5,7 @@ library(ZikaModel)
 library(reshape2)
 library(ggplot2)
 library(viridis)
+library(gridExtra)
 
 source(file.path("R", "wrapper_to_save_plot.R"))
 source(file.path("R", "save_plot.R"))
@@ -124,11 +125,51 @@ lapply(seq_along(p3),
        hgt = 10)
 
 
+# plot means ------------------------------------------------------------------
+
+
+my_breaks <- seq(from = 0, to = time, by = 364 * 5)
+
+Kc_r <- data.frame(x = out$TIME, y = out$Kcav)
+
+Kc_p <- ggplot(data = Kc_r, aes(x = x, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Years", breaks = my_breaks, labels = my_breaks/364) +
+  scale_y_continuous("Mean patch Kc") +
+  ggtitle("Carrying capacity") +
+  theme_bw()
+
+eip_r <- data.frame(x = out$TIME, y = out$eipav)
+
+eip_p <- ggplot(data = eip_r, aes(x = x, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Years", breaks = my_breaks, labels = my_breaks/364) +
+  scale_y_continuous("Mean patch EIP") +
+  ggtitle("Extrinsic Incubation Period") +
+  theme_bw()
+
+delta_r <- data.frame(x = out$TIME, y = out$Deltaav)
+
+delta_p <- ggplot(data = delta_r, aes(x = x, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Years", breaks = my_breaks, labels = my_breaks/364) +
+  scale_y_continuous("Mean patch Delta") +
+  ggtitle("Adult mosquito daily mortality rate") +
+  theme_bw()
+
+p_all <- arrangeGrob(Kc_p, eip_p, delta_p, ncol = 2)
+
+ggsave(filename = file.path(out_dir, "mosquitoes_Kc_eip_delta.png"), 
+       plot = p_all, width = 18, height = 15, units = "cm", dpi = 300)
+
+
+
 # -----------------------------------------------------------------------------
 #
 # Plot diagnostics by patch
 #
 # -----------------------------------------------------------------------------
+
 
 
 tt <- out$TIME

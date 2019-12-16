@@ -14,53 +14,46 @@ source(file.path("R", "save_plot.R"))
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic_1")
+out_dir <- file.path("figures", "deterministic_test")
 
-agec <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
+age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
-death <- c(1e-10,
-           1e-10,
-           1e-10,
-           0.00277068683332695,
-           0.0210680857689784,
-           0.026724997685722,
-           0.0525354529367476,
-           0.0668013582441452,
-           0.119271483740379,
-           0.279105747097929,
-           0.390197266957464)
+deathrt <- c(1e-10,
+             1e-10,
+             1e-10,
+             0.00277068683332695,
+             0.0210680857689784,
+             0.026724997685722,
+             0.0525354529367476,
+             0.0668013582441452,
+             0.119271483740379,
+             0.279105747097929,
+             0.390197266957464)
 
+# number of years to run the simulation for
 time_years <- 50 # years
 
+# time step
 my_dt <- 1
 
-odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
+# number of model time steps
+time_frame <- (364 * time_years) / my_dt
 
 
 # run -------------------------------------------------------------------------
 
 
-create_generator <- create_r_model(odin_model_path = odin_model_path,
-                                   agec = agec,
-                                   death = death,
-                                   nn_links = nn_links,
-                                   amplitudes_phases = amplitudes_phases,
-                                   DT = my_dt,
-                                   season = TRUE)
-
-gen <- create_generator$generator(user = create_generator$state)
-
-integer_time_steps <- (364 * time_years) / my_dt
-
-its <- seq(0, integer_time_steps, 1)
-
-mod_run <- gen$run(its)
+# run the model
+out <- run_model(agec = age_init,
+                 death = deathrt,
+                 nn_links,
+                 amplitudes_phases,
+                 time = time_frame,
+                 season = TRUE)
 
 
 # post processing -------------------------------------------------------------
 
-
-out <- gen$transform_variables(mod_run)
 
 out_2 <- post_processing(out, my_dt)
 
@@ -86,35 +79,9 @@ lapply(seq_along(p2),
 # extract mosquitoes diagnostics ----------------------------------------------
 
 
-diagno_mos_wt <- c("Lwt", "Mwt_S", "Mwt_E1", "Mwt_E2", "Mwt_I1", "Mwt_tot", "Lwt_birth",
-                   "Lwt_mature", "Mwt_inf1")
+mosquito_diagnostics <- post_processing_mos(out)
 
-diagno_mos_wb <- c("Lwb", "Mwb_S", "Mwb_E1", "Mwb_E2", "Mwb_I1", "Mwb_tot", "Lwb_birth",
-                   "Lwb_mature", "Mwb_inf1", "Mwb_intro")
-
-diagno_mos <- c(diagno_mos_wt, diagno_mos_wb)
-
-dia_mos <- setNames(out[diagno_mos], diagno_mos)
-
-mossum <- lapply(dia_mos, function(x){apply(x, 1, sum)})
-
-mat_M <- do.call("cbind", mossum)
-
-df_M <- as.data.frame(mat_M)
-
-tt <- out$TIME
-time <- max(tt)
-
-df_M$time <- tt
-df_M_melt <- melt(df_M,
-                  id.vars = "time",
-                  variable.name = "diagnostic")
-
-diagno_levs <- c(diagno_mos_wt, diagno_mos_wb)
-
-df_M_melt$diagnostic <- factor(df_M_melt$diagnostic, levels = diagno_levs, labels = diagno_levs)
-
-p3 <- plot_demographics(df_M_melt)
+p3 <- plot_demographics(mosquito_diagnostics)
 
 lapply(seq_along(p3),
        wrapper_to_save_plot,
@@ -128,6 +95,7 @@ lapply(seq_along(p3),
 # plot means ------------------------------------------------------------------
 
 
+time <- max(out$TIME)
 my_breaks <- seq(from = 0, to = time, by = 364 * 5)
 
 Kc_r <- data.frame(x = out$TIME, y = out$Kcav)
@@ -157,7 +125,7 @@ delta_p <- ggplot(data = delta_r, aes(x = x, y = y)) +
   ggtitle("Adult mosquito daily mortality rate") +
   theme_bw()
 
-p_all <- arrangeGrob(Kc_p, eip_p, delta_p, ncol = 2)
+p_all <- grid.arrange(Kc_p, eip_p, delta_p, ncol = 2)
 
 ggsave(filename = file.path(out_dir, "mosquitoes_Kc_eip_delta.png"), 
        plot = p_all, width = 18, height = 15, units = "cm", dpi = 300)

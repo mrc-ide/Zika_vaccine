@@ -51,7 +51,13 @@ save_plot <- function(plot_obj, out_pth, out_fl_nm, wdt, hgt){
       units = "cm",
       pointsize = 12,
       res = 300)
-  print(plot_obj)
+  
+  if(is(plot_obj, "gtable")) {
+    grid::grid.draw(plot_obj)
+  } else {
+    print(plot_obj)
+  }
+  
   on.exit(dev.off())
   
 }

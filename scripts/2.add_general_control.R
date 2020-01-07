@@ -1,3 +1,4 @@
+
 devtools::install_github("mrc-ide/ZikaModel")
 
 library(ZikaModel)
@@ -13,7 +14,7 @@ source(file.path("R", "reshape.R"))
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic_wol_4")
+out_dir <- file.path("figures", "deterministic_control_noseason")
 
 agec <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -35,11 +36,7 @@ my_dt <- 1
 
 odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
 
-Wb_starttime <- 2 # years
-Wb_introduration_days <- 364 # days
-Wb_introlevel <- 0.3 # proportion of the initial number of wt mosquitoes 
-
-Wb_introduration <- Wb_introduration_days / my_dt
+propMwtControl <- 0.2
 
 
 # run -------------------------------------------------------------------------
@@ -51,10 +48,8 @@ create_generator <- create_r_model(odin_model_path = odin_model_path,
                                    nn_links = nn_links,
                                    amplitudes_phases = amplitudes_phases,
                                    DT = my_dt,
-                                   season = TRUE,
-                                   Wb_starttime = Wb_starttime,
-                                   Wb_introduration = Wb_introduration,
-                                   Wb_introlevel = Wb_introlevel)
+                                   season = FALSE,
+                                   propMwtControl = propMwtControl)
 
 gen <- create_generator$generator(user = create_generator$state)
 
@@ -131,6 +126,15 @@ lapply(seq_along(p3),
        out_pth = out_dir,
        wdt = 18,
        hgt = 10)
+
+
+# plot means ------------------------------------------------------------------
+
+
+p_all <- plot_Kc_eip_delta(mod_run)
+  
+ggsave(filename = file.path(out_dir, "mosquitoes_Kc_eip_delta.png"), 
+       plot = p_all, width = 18, height = 15, units = "cm", dpi = 300)
 
 
 

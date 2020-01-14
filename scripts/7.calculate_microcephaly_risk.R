@@ -1,6 +1,6 @@
 
 
-devtools::install_github("mrc-ide/ZikaModel")
+## devtools::install_github("mrc-ide/ZikaModel")
 
 library(ZikaModel)
 library(reshape2)
@@ -10,7 +10,6 @@ library(gridExtra)
 
 source(file.path("R", "wrapper_to_save_plot.R"))
 source(file.path("R", "utility_functions.R"))
-
 
 
 # define parameters -----------------------------------------------------------
@@ -68,7 +67,7 @@ out <- run_model(agec = age_init,
                  time = time_frame,
                  season = TRUE)
 
-infection_probs <- out$inf_1_prob[,,,1:2]
+infection_probs <- out$inf_1_prob
 
 time_steps <- out$TIME
 

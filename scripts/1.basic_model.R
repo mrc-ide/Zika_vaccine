@@ -115,9 +115,9 @@ save_plot(plot_obj = p_all,
 
 tt <- out$TIME
 time <- max(tt)
+brks <- seq(from = 0, to = time, by = 364 * 5)
 
 out_dir_1 <- file.path(out_dir, "patch")
-brks <- seq(from = 0, to = time, by = 364 * 5)
 
 births_patch_df <- as.data.frame(out$births)
 names(births_patch_df) <- seq_len(21)
@@ -432,7 +432,7 @@ inf_1_full_melt$age <- factor(inf_1_full_melt$age,
                               levels = unique(inf_1_full_melt$age),
                               labels = unique(inf_1_full_melt$age))
 
-inf_1_melt <- subset(inf_1_full_melt, vaccine == 1 & patch == 3)
+inf_1_melt <- subset(inf_1_full_melt, vaccine == 1 & patch == 1)
 
 p <- ggplot(inf_1_melt) +
   geom_line(aes(x = time, y = value, colour = age)) +
@@ -445,6 +445,30 @@ p <- ggplot(inf_1_melt) +
         strip.text.x = element_text(size = 8))
 save_plot(p,
           out_dir,
-          out_fl_nm = sprintf("inf_1_vaccine_%s_patch_%s.png", 1, 3),
+          out_fl_nm = sprintf("inf_1_vaccine_%s_patch_%s.png", 1, 1),
+          wdt = 10,
+          hgt = 8)
+
+inf_1_prob_full_melt <- melt(out$inf_1_prob)
+names(inf_1_prob_full_melt) <- c("time", "age", "vaccine", "patch", "value")
+inf_1_prob_full_melt$time <- tt_long
+inf_1_prob_full_melt$age <- factor(inf_1_prob_full_melt$age,
+                              levels = unique(inf_1_prob_full_melt$age),
+                              labels = unique(inf_1_prob_full_melt$age))
+
+inf_1_prob_melt <- subset(inf_1_prob_full_melt, vaccine == 1 & patch == 1)
+
+p <- ggplot(inf_1_prob_melt) +
+  geom_line(aes(x = time, y = value, colour = age)) +
+  scale_fill_viridis() +
+  scale_y_continuous(name = "inf_1") +
+  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        strip.text.x = element_text(size = 8))
+save_plot(p,
+          out_dir,
+          out_fl_nm = sprintf("inf_1_prob_vaccine_%s_patch_%s.png", 1, 1),
           wdt = 10,
           hgt = 8)

@@ -21,13 +21,14 @@ save_plot(p, "figures", "random_draws_from_JH_posterior", wdt = 14, hgt = 9)
 ## Gamma function used
 dput(microceph_v1)
 
-chain_mean <- mean(chains$mean)
-chain_var <- mean(chains$var)
-chain_c <- mean(chains$c)
+chain_means <- colMeans(chains)
+gamma_mean <- as.numeric(chain_means["mean"])
+gamma_var <- as.numeric(chain_means["var"])
+gamma_c <- as.numeric(chain_means["c"])
 
-pars <- c(mean = chain_mean,
-          var = chain_var,
-          c = chain_c)
+pars <- c(mean = gamma_mean,
+          var = gamma_var,
+          c = gamma_c)
 
 m_risk_probs <- microceph_v1(pars = pars)
 

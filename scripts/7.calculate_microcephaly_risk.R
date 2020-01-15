@@ -10,6 +10,8 @@ library(gridExtra)
 
 source(file.path("R", "wrapper_to_save_plot.R"))
 source(file.path("R", "utility_functions.R"))
+source(file.path("R", "melt_sim_output_array.R"))
+source(file.path("R", "plot_diagnostics_by_age.R"))
 
 
 # define parameters -----------------------------------------------------------
@@ -49,11 +51,7 @@ bp <- 0.0002
 # microcephaly risk during pregnancy - processed from James' curves
 mr_pregn_data <- readRDS(file.path("output", "microcephaly_risk_probs.rds"))
 
-# age specific fertility rates (live births per women) 
-br_brazil <- read.csv(file.path("data", "age_specific_birth_rates_Brazil.csv"))
-
-# sex ratio of the total population (males per 100 females)
-sex_ratio_brazil <- read.csv(file.path("data", "sex_ratio_tot_pop_Brazil.csv"))
+br_brazil_age <- readRDS()
 
 
 # run -------------------------------------------------------------------------
@@ -67,7 +65,7 @@ out <- run_model(agec = age_init,
                  time = time_frame,
                  season = TRUE)
 
-infection_probs <- out$inf_1_prob
+n_infections <- out$inf_1
 
 time_steps <- out$TIME
 
@@ -76,47 +74,29 @@ tt <- out$TIME
 time <- max(tt)
 
 
-# plot probabilty of new infections -------------------------------------------
+# plot number of new infections -------------------------------------------
 
 
-infection_probs <- out$inf_1_prob
 brks <- seq(from = 0, to = time, by = 364 * 5)
 
-inf_1_prob_full_melt <- melt(infection_probs)
-names(inf_1_prob_full_melt) <- c("time", "age", "vaccine", "patch", "value")
-no_age <- length(unique(inf_1_prob_full_melt$age))
-no_vaccine <- length(unique(inf_1_prob_full_melt$vaccine))
-no_patch <- length(unique(inf_1_prob_full_melt$patch))
-combs <- no_age * no_vaccine * no_patch
-tt_long <- rep(tt, combs)
-inf_1_prob_full_melt$time <- tt_long
-inf_1_prob_full_melt$age <- factor(inf_1_prob_full_melt$age,
-                                   levels = unique(inf_1_prob_full_melt$age),
-                                   labels = unique(inf_1_prob_full_melt$age))
+inf_1_full_melt <- melt_sim_output_array(n_infections, tt)
 
-inf_1_prob_melt <- subset(inf_1_prob_full_melt, vaccine == 1 & patch == 1)
+inf_1_melt <- subset(inf_1_full_melt, vaccine == 1 & patch == 1)
 
-p <- ggplot(inf_1_prob_melt) +
-  geom_line(aes(x = time, y = value, colour = age)) +
-  scale_fill_viridis() +
-  scale_y_continuous(name = "inf_1") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
+p <- plot_diagnostics_by_age(inf_1_melt, "inf_1")
+
 save_plot(p,
           out_dir,
-          out_fl_nm = sprintf("inf_1_prob_vaccine_%s_patch_%s", 1, 1),
+          out_fl_nm = sprintf("inf_1_vaccine_%s_patch_%s", 1, 1),
           wdt = 10,
           hgt = 8)
 
 
 # ----------------------------------------------------------------------------
-# calculate the risk of microcephaly cases for each simulation time step
+# calculate the number of infected foeti for each simulation time step
 
 
-array_dim <- dim(infection_probs)
+array_dim <- dim(n_infections)
 
 probM <- mr_pregn_data$prob
 
@@ -148,13 +128,13 @@ for (i in seq(1, n_time_steps, 1)) {
     
     if(index == 0) stop("j = ", j)
     
-    tmp <- tmp + infection_probs[j,,,] * probM[index]
+    tmp <- tmp + n_infections[j,,,] * (probM[index] + bp - probM[index]*bp)
   
   }
   
   #message("tmp = ", tmp)
   
-  all_probs[i,,,] <- 1 - (1 - tmp) * (1 - bp)
+  all_probs[i,,,] <- tmp #1 - (1 - tmp) * (1 - bp)
   
 }
 
@@ -162,41 +142,36 @@ for (i in seq(1, n_time_steps, 1)) {
 # plot ------------------------------------------------------------------------
 
 
-all_probs_full_melt <- melt(all_probs)
-names(all_probs_full_melt) <- c("time", "age", "vaccine", "patch", "value")
-no_age <- length(unique(all_probs_full_melt$age))
-no_vaccine <- length(unique(all_probs_full_melt$vaccine))
-no_patch <- length(unique(all_probs_full_melt$patch))
-combs <- no_age * no_vaccine * no_patch
-tt_long <- rep(tt, combs)
-all_probs_full_melt$time <- tt_long
-all_probs_full_melt$age <- factor(all_probs_full_melt$age,
-                                 levels = unique(all_probs_full_melt$age),
-                                 labels = unique(all_probs_full_melt$age))
+all_probs_full_melt <- melt_sim_output_array(all_probs, tt)
 
 all_probs_melt <- subset(all_probs_full_melt, vaccine == 1 & patch == 1)
 
-p <- ggplot(all_probs_melt) +
-  geom_line(aes(x = time, y = value, colour = age)) +
-  scale_fill_viridis() +
-  scale_y_continuous(name = "P_m_t") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
+p2 <- plot_diagnostics_by_age(all_probs_melt, "infected foeti")
+
+save_plot(p2,
           out_dir,
-          out_fl_nm = sprintf("P_m_t_vaccine_%s_patch_%s", 1, 1),
+          out_fl_nm = sprintf("n_infected_foeti_bp_vaccine_%s_patch_%s", 1, 1),
           wdt = 12,
           hgt = 8)
 
 
-# # calculate number of births per age group ------------------------------------
-# 
-# br_brazil <- br_brazil[, 15]
-# sr_pc <- sex_ratio_brazil[, 17]
-# sr <- sr_pc / 100
-# 
-# na <- 11
-# br_age <- rep(0, na)
+# calculate number of births per age group ------------------------------------
+
+
+all_probs_2 <- sweep(all_probs, MARGIN = 2, br_brazil_age, `*`)
+
+
+# plot ------------------------------------------------------------------------
+  
+  
+all_probs_2_full_melt <- melt_sim_output_array(all_probs_2, tt)
+
+all_probs_2_melt <- subset(all_probs_2_full_melt, vaccine == 1 & patch == 8)
+
+p3 <- plot_diagnostics_by_age(all_probs_2_melt, "infected births")
+
+save_plot(p3,
+          out_dir,
+          out_fl_nm = sprintf("n_infected_births_vaccine_%s_patch_%s", 1, 8),
+          wdt = 12,
+          hgt = 8)

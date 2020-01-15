@@ -14,7 +14,7 @@ source(file.path("R", "utility_functions.R"))
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic_test")
+out_dir <- file.path("figures", "deterministic_2")
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -461,7 +461,7 @@ inf_1_prob_melt <- subset(inf_1_prob_full_melt, vaccine == 1 & patch == 1)
 p <- ggplot(inf_1_prob_melt) +
   geom_line(aes(x = time, y = value, colour = age)) +
   scale_fill_viridis() +
-  scale_y_continuous(name = "inf_1") +
+  scale_y_continuous(name = "inf_1_prob") +
   scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
   theme_bw() +
   theme(axis.text.x = element_text(size = 8),

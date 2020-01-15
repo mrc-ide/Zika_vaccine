@@ -88,7 +88,7 @@ p <- plot_diagnostics_by_age(inf_1_melt, "inf_1")
 save_plot(p,
           out_dir,
           out_fl_nm = sprintf("inf_1_vaccine_%s_patch_%s", 1, 1),
-          wdt = 10,
+          wdt = 12,
           hgt = 8)
 
 

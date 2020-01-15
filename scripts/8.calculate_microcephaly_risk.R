@@ -51,7 +51,7 @@ bp <- 0.0002
 # microcephaly risk during pregnancy - processed from James' curves
 mr_pregn_data <- readRDS(file.path("output", "microcephaly_risk_probs.rds"))
 
-br_brazil_age <- readRDS()
+br_brazil_age <- readRDS(file.path("output", "age_specific_birth_rates.rds"))
 
 
 # run -------------------------------------------------------------------------
@@ -155,7 +155,7 @@ save_plot(p2,
           hgt = 8)
 
 
-# calculate number of births per age group ------------------------------------
+# calculate number of microcephaly cases per age group ------------------------------------
 
 
 all_probs_2 <- sweep(all_probs, MARGIN = 2, br_brazil_age, `*`)
@@ -166,12 +166,12 @@ all_probs_2 <- sweep(all_probs, MARGIN = 2, br_brazil_age, `*`)
   
 all_probs_2_full_melt <- melt_sim_output_array(all_probs_2, tt)
 
-all_probs_2_melt <- subset(all_probs_2_full_melt, vaccine == 1 & patch == 8)
+all_probs_2_melt <- subset(all_probs_2_full_melt, vaccine == 1 & patch == 1)
 
-p3 <- plot_diagnostics_by_age(all_probs_2_melt, "infected births")
+p3 <- plot_diagnostics_by_age(all_probs_2_melt, "microcephaly cases")
 
 save_plot(p3,
           out_dir,
-          out_fl_nm = sprintf("n_infected_births_vaccine_%s_patch_%s", 1, 8),
+          out_fl_nm = sprintf("microcephaly_cases_vaccine_%s_patch_%s", 1, 1),
           wdt = 12,
           hgt = 8)

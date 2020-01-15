@@ -1,6 +1,8 @@
 
 # calculate age specific birth rates
 
+source(file.path("R", "utility_functions.R"))
+
 # age specific fertility rates per 5yr windows (live births per 1000 women) 
 br_brazil_all_years <- read.csv(file.path("data", "age_specific_birth_rates_Brazil.csv"))
 

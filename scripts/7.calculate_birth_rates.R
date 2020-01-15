@@ -37,3 +37,5 @@ br_brazil_age[8] <- 0
 br_brazil_age[9] <- 0
 br_brazil_age[10] <- 0
 br_brazil_age[11] <- 0
+
+write_out_rds(br_brazil_age, "output", "age_specific_birth_rates")

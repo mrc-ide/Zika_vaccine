@@ -74,7 +74,7 @@ tt <- out$TIME
 time <- max(tt)
 
 
-# plot number of new infections -------------------------------------------
+# plot number of new infections -----------------------------------------------
 
 
 brks <- seq(from = 0, to = time, by = 364 * 5)
@@ -92,7 +92,7 @@ save_plot(p,
           hgt = 8)
 
 
-# ----------------------------------------------------------------------------
+# -----------------------------------------------------------------------------
 # calculate the number of infected foeti for each simulation time step
 
 
@@ -155,7 +155,7 @@ save_plot(p2,
           hgt = 8)
 
 
-# calculate number of microcephaly cases per age group ------------------------------------
+# calculate number of microcephaly cases per age group ------------------------
 
 
 all_probs_2 <- sweep(all_probs, MARGIN = 2, br_brazil_age, `*`)

@@ -1,24 +1,3 @@
-apply_mean_across_patches <- function(x){
-  
-  # browser()
-  
-  apply(x, 1, mean_across_patches)
-  
-}
-
-mean_across_patches <- function(x) {
-  
-  mean(x[1:20])
-  
-}
-
-# mean_across_patches <- function(out, var) {
-#   
-#   ret1 <- apply(out[[var]][,1:20], 1, mean)
-#   
-#   data.frame(x = out$TIME, y = ret1)
-#   
-# }
 
 reshape_by_patch <- function(var, out) {
   
@@ -31,5 +10,23 @@ reshape_by_patch <- function(var, out) {
        id.vars = "x",
        variable.name = "patch",
        value.name = "y")
+  
+}
+
+melt_sim_output_array <- function(array_to_melt, TIME) {
+  
+  full_melt <- melt(array_to_melt)
+  names(full_melt) <- c("time", "age", "vaccine", "patch", "value")
+  no_age <- length(unique(full_melt$age))
+  no_vaccine <- length(unique(full_melt$vaccine))
+  no_patch <- length(unique(full_melt$patch))
+  combs <- no_age * no_vaccine * no_patch
+  tt_long <- rep(TIME, combs)
+  full_melt$time <- tt_long
+  full_melt$age <- factor(full_melt$age,
+                          levels = unique(full_melt$age),
+                          labels = unique(full_melt$age))
+  
+  full_melt
   
 }

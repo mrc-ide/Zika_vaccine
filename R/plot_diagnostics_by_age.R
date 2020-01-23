@@ -27,6 +27,21 @@ plot_diagnostics_by_age <- function(df, y_lab_title) {
   
 }
 
+plot_diagnostics_by_patch <- function(df, y_lab_title) {
+  
+  p <- ggplot(df) +
+  geom_line(aes(x = time, y = value), colour = "#63B8FF") +
+  facet_wrap(~ patch, ncol = 4) +
+  scale_y_continuous(name = y_lab_title) +
+  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
+  theme_bw() +
+  theme(axis.text.x = element_text(size = 8),
+        axis.text.y = element_text(size = 8),
+        strip.text.x = element_text(size = 8))
+
+}
+
+
 # plot_diagnostics_by_age <- function(df, out_pth, out_fl_nm, diagno_nms){
 # 
 #   # browser()

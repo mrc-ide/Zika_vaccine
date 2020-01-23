@@ -30,3 +30,23 @@ melt_sim_output_array <- function(array_to_melt, TIME) {
   full_melt
   
 }
+
+melt_by_patch <- function(array_to_melt, TIME) {
+  
+  NP <- 21
+  
+  # sum across ages and vaccine status (dims 2 and 3)
+  sum <- apply(array_to_melt, c(1, 4), sum)
+  
+  sum_df <- as.data.frame(sum)
+  
+  names(sum_df) <- seq_len(NP)
+
+  sum_df$time <- TIME
+  
+  melt(sum_df,
+       id.vars = "time",
+       variable.name = "patch")
+  
+  
+}

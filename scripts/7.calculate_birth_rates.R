@@ -22,7 +22,7 @@ DT <- 1
 # age specific fertility rates per 5yr windows (live births per 1000 women) 
 br_brazil_all_years <- read.csv(file.path("data", "age_specific_birth_rates_Brazil.csv"))
 
-br_brazil <- br_brazil_all_years[, "X2010...2015"] / 1000 / 5
+br_brazil <- br_brazil_all_years[, "X2010...2015"] / 1000
 
 br_brazil_2 <- c(0, br_brazil)
 

@@ -24,8 +24,11 @@ summarize_in_window <- function(melted_array, from_t, to_t) {
   
   NP <- 21
   
+  from_t_days <- 364 * from_t
+  to_t_days <- 364 * to_t
+  
   test <- split(melted_array, melted_array$patch)
-  test_2 <- lapply(test, function(x) round(sum(x[x$time %in% c(from_t:to_t),"value"]),0))
+  test_2 <- lapply(test, function(x) round(sum(x[x$time %in% c(from_t_days:to_t_days),"value"]),0))
   test_2a <- lapply(test, function(x) max(x$value))
   
   data.frame(patch = as.factor(seq_len(NP)), 

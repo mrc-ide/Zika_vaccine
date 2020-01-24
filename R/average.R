@@ -19,3 +19,18 @@ mean_across_patches <- function(x) {
 #   data.frame(x = out$TIME, y = ret1)
 #   
 # }
+
+summarize_in_window <- function(melted_array, from_t, to_t) {
+  
+  NP <- 21
+  
+  test <- split(melted_array, melted_array$patch)
+  test_2 <- lapply(test, function(x) round(sum(x[x$time %in% c(from_t:to_t),"value"]),0))
+  test_2a <- lapply(test, function(x) max(x$value))
+  
+  data.frame(patch = as.factor(seq_len(NP)), 
+             n = do.call("rbind", test_2),
+             max_y = do.call("rbind", test_2a))
+  
+}
+

@@ -76,9 +76,11 @@ write_out_csv <- function(dat, my_path, file_name) {
   
   dir.create(my_path, FALSE, TRUE)
   
+  file_name_2 <- paste0(file_name, ".csv")
+  
   write.table(
     dat,
-    file.path(my_path, file_name),
+    file.path(my_path, file_name_2),
     row.names = FALSE,
     sep = ",")
   

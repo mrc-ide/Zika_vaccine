@@ -74,9 +74,17 @@ create_generator <- create_r_model(odin_model_path = odin_model_path,
                                    N_human = N_human_brazil)
 
 gen <- create_generator$generator(user = create_generator$state)
+
 integer_time_steps <- (364 * time_years) / my_dt
+
 its <- seq(0, integer_time_steps, 1)
+
 mod_run <- gen$run(its)
+
+
+# post processing -------------------------------------------------------------
+
+
 out <- gen$transform_variables(mod_run)
 
 n_infections <- out$inf_1

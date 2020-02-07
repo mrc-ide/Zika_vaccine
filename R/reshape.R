@@ -1,4 +1,10 @@
 
+sum_across_array_dims <-  function(array_to_sum, dim_to_keep) {
+  
+  apply(array_to_sum, dim_to_keep, sum)
+  
+}
+
 reshape_by_patch <- function(var, out) {
   
   NP <- 21
@@ -15,7 +21,7 @@ reshape_by_patch <- function(var, out) {
 
 melt_sim_output_array <- function(array_to_melt, TIME) {
   
-  full_melt <- melt(array_to_melt)
+  full_melt <- reshape2::melt(array_to_melt)
   names(full_melt) <- c("time", "age", "vaccine", "patch", "value")
   no_age <- length(unique(full_melt$age))
   no_vaccine <- length(unique(full_melt$vaccine))
@@ -31,22 +37,52 @@ melt_sim_output_array <- function(array_to_melt, TIME) {
   
 }
 
-melt_by_patch <- function(array_to_melt, TIME) {
+melt_sim_output_array_2 <- function(array_to_melt, TIME) {
   
-  NP <- 21
+  full_melt <- reshape2::melt(array_to_melt)
+  names(full_melt) <- c("time", "vaccine", "patch", "value")
+  no_vaccine <- length(unique(full_melt$vaccine))
+  no_patch <- length(unique(full_melt$patch))
+  combs <- no_vaccine * no_patch
+  tt_long <- rep(TIME, combs)
+  full_melt$time <- tt_long
   
-  # sum across ages and vaccine status (dims 2 and 3)
-  sum <- apply(array_to_melt, c(1, 4), sum)
-  
-  sum_df <- as.data.frame(sum)
-  
-  names(sum_df) <- seq_len(NP)
-
-  sum_df$time <- TIME
-  
-  melt(sum_df,
-       id.vars = "time",
-       variable.name = "patch")
-  
+  full_melt
   
 }
+
+melt_sim_output_array_3 <- function(array_to_melt, TIME) {
+  
+  vaccine_status <- 2
+  
+  df <- as.data.frame(array_to_melt)
+  
+  names(df) <- seq_len(vaccine_status)
+  
+  df$time <- TIME
+  
+  reshape2::melt(df,
+                 id.vars = "time",
+                 variable.name = "vaccine_status")
+  
+}
+
+# melt_by_patch <- function(array_to_melt, TIME) {
+#   
+#   NP <- 21
+#   
+#   # sum across ages and vaccine status (dims 2 and 3)
+#   sum <- apply(array_to_melt, c(1, 4), sum)
+#   
+#   sum_df <- as.data.frame(sum)
+#   
+#   names(sum_df) <- seq_len(NP)
+# 
+#   sum_df$time <- TIME
+#   
+#   melt(sum_df,
+#        id.vars = "time",
+#        variable.name = "patch")
+#   
+#   
+# }

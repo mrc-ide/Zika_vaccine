@@ -4,12 +4,14 @@
 
 library(ZikaModel)
 library(ggplot2)
+library(viridis)
 
 source(file.path("R", "utility_functions.R"))
 source(file.path("R", "wrapper_multi_factors_ZikaModel.R"))
 source(file.path("R", "calculate_MC_numbers.R"))
 source(file.path("R", "reshape.R"))
 source(file.path("R", "post_process.R"))
+source(file.path("R", "plot_diagnostics.R"))
 
 
 # define parameters -----------------------------------------------------------
@@ -55,12 +57,22 @@ vacc_child_coverage_values <- c(0.5, 0.8)
 
 population_coverage_values <- c(0.5, 1)
   
-vacc_starttime <- 1.5 * 364  
+vacc_starttime <- 1.5  
 
 vacc_stoptime <- vacc_starttime + 60
 
 # from 9 to 49
-vacc_ages <- c(0,0,1,1,1,1,0,0,0,0,0) 
+vacc_ages <- c(0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0) 
+
+tot_cov_values <- vacc_child_coverage_values * population_coverage_values
+
+vacc_child_cov <- tot_cov_values[1]
+
+params <- list(DT = my_dt,
+               N_human = N_human_brazil,
+               vacc_child_coverage = vacc_child_cov,
+               vacc_child_starttime = vacc_starttime,
+               vacc_child_stoptime = vacc_stoptime)
 
 
 # load data -------------------------------------------------------------------
@@ -68,27 +80,13 @@ vacc_ages <- c(0,0,1,1,1,1,0,0,0,0,0)
 
 # microcephaly risk during pregnancy
 mr_pregn_data <- readRDS(file.path("output", "microcephaly_risk_probs.rds"))
-#mr_pregn_data[, "prob"] <- 0
+
 
 br_brazil_age <- readRDS(file.path("output", "age_specific_birth_rates.rds"))
-
-  
-# preprocessing ---------------------------------------------------------------
-
-
-tot_cov_values <- vacc_child_coverage_values * population_coverage_values
-
-vacc_child_cov <- tot_cov_values[1]
 
 
 # run -------------------------------------------------------------------------
 
-
-params <- list(DT = my_dt,
-               N_human = N_human_brazil,
-               vacc_child_coverage = vacc_child_cov,
-               vacc_child_starttime = vacc_starttime,
-               vacc_child_stoptime = vacc_stoptime)
 
 odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
 
@@ -116,6 +114,8 @@ out <- gen$transform_variables(mod_run)
 
 n_infections <- out$inf_1
 
+Ntotal <- out$Ntotal
+
 time_steps <- out$TIME
 
 tt <- out$TIME
@@ -128,10 +128,36 @@ brks <- seq(from = 0, to = time, by = 364 * plot_interval)
 # plot number of new infections -----------------------------------------------
 
 
-sum_over_ages_patches <- lsum_across_array_dims(n_infections, c(1,3))
+## by age, patches and vaccine status
+melted_array_full <- melt_sim_output_array(n_infections, tt)
 
-melted_sum <- melt_sim_output_array_3(sum_over_ages_patches, tt)  
+melted_array <- subset(melted_array_full, vaccine == 1 & patch == 1)
 
-p <- ggplot(data = summary_all) +
-  geom_line(aes(x = time, y = value, colour = vaccine_status)) +
-  facet_wrap(~ id)
+p <- plot_diagnostics_by_age(melted_array, "new infections", "Non vaccinated")
+
+melted_array_2 <- subset(melted_array_full, vaccine == 2 & patch == 1)
+
+p2 <- plot_diagnostics_by_age(melted_array_2, "new infections", "Vaccinated")
+  
+## by patches and vaccine status
+sum_over_ages <- sum_across_array_dims(n_infections, c(1, 3, 4))
+
+Nt_sum_over_ages <- sum_across_array_dims(Ntotal, c(1, 3, 4))
+
+prop_sum_over_ages <- sum_over_ages / Nt_sum_over_ages
+
+melted_sum <- melt_sim_output_array_2(prop_sum_over_ages, tt)
+
+p <- ggplot(data = melted_sum) +
+  geom_line(aes(x = time, y = value, colour = vaccine)) +
+  facet_wrap(~ patch)
+  
+# ## by vaccine status
+# sum_over_ages_patches <- sum_across_array_dims(n_infections, c(1, 3))
+# 
+# melted_sum <- melt_sim_output_array_3(sum_over_ages_patches, tt)
+# 
+# p <- ggplot(data = melted_sum) +
+#   geom_line(aes(x = time, y = value, colour = vaccine_status))
+# 
+# p

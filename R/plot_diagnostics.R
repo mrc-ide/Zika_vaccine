@@ -13,9 +13,9 @@ give_col_names <- function(x){
   x
 }
 
-plot_diagnostics_by_age <- function(df, y_lab_title) {
+plot_diagnostics_by_age <- function(df, y_lab_title, ttl = NULL) {
   
-  ggplot(df) +
+  p <- ggplot(df) +
     geom_line(aes(x = time, y = value, colour = age)) +
     scale_fill_viridis() +
     scale_y_continuous(name = y_lab_title) +
@@ -25,20 +25,32 @@ plot_diagnostics_by_age <- function(df, y_lab_title) {
           axis.text.y = element_text(size = 8),
           strip.text.x = element_text(size = 8))
   
+  if(!is.null(ttl)) {
+    
+    p + ggtitle(ttl)
+    
+  }
+  
 }
 
-plot_diagnostics_by_patch <- function(df, y_lab_title) {
+plot_diagnostics_by_patch <- function(df, y_lab_title, ttl = NULL) {
   
   p <- ggplot(df) +
-  geom_line(aes(x = time, y = value), colour = "#63B8FF") +
-  facet_wrap(~ patch, ncol = 4) +
-  scale_y_continuous(name = y_lab_title) +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-
+    geom_line(aes(x = time, y = value), colour = "#63B8FF") +
+    facet_wrap(~ patch, ncol = 4) +
+    scale_y_continuous(name = y_lab_title) +
+    scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
+    theme_bw() +
+    theme(axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          strip.text.x = element_text(size = 8))
+  
+  if(!is.null(ttl)) {
+    
+    p + ggtitle(ttl)
+    
+  }
+  
 }
 
 

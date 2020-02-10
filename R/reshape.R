@@ -1,5 +1,5 @@
 
-sum_across_array_dims <-  function(array_to_sum, dim_to_keep) {
+sum_across_array_dims <- function(array_to_sum, dim_to_keep) {
   
   apply(array_to_sum, dim_to_keep, sum)
   
@@ -47,6 +47,10 @@ melt_sim_output_array_2 <- function(array_to_melt, TIME) {
   tt_long <- rep(TIME, combs)
   full_melt$time <- tt_long
   
+  full_melt$vaccine <- factor(full_melt$vaccine,
+                          levels = unique(full_melt$vaccine),
+                          labels = unique(full_melt$vaccine))
+  
   full_melt
   
 }
@@ -63,7 +67,7 @@ melt_sim_output_array_3 <- function(array_to_melt, TIME) {
   
   reshape2::melt(df,
                  id.vars = "time",
-                 variable.name = "vaccine_status")
+                 variable.name = "vaccine")
   
 }
 

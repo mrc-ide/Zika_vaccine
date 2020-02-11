@@ -18,7 +18,7 @@ source(file.path("R", "calculate_MC_numbers.R"))
 # define parameters -----------------------------------------------------------
 
 
-experiment_name <- "vaccine_strategies_high_cov"
+experiment_name <- file.path("vaccine_strategies", "high_cov")
 
 out_fig_dir <- file.path("figures", experiment_name)
 

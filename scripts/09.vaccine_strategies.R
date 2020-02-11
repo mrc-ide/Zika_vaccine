@@ -12,6 +12,7 @@ source(file.path("R", "calculate_MC_numbers.R"))
 source(file.path("R", "reshape.R"))
 source(file.path("R", "post_process.R"))
 source(file.path("R", "plot_diagnostics.R"))
+source(file.path("R", "calculate_MC_numbers.R"))
 
 
 # define parameters -----------------------------------------------------------
@@ -59,12 +60,13 @@ population_coverage_values <- c(0.5, 1)
   
 vacc_starttime <- 1.5  
 
-vacc_stoptime <- vacc_starttime + 60
+# 2 months campaign
+vacc_stoptime <- vacc_starttime + 0.2 
 
 # from 9 to 49
 vacc_ages <- c(0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0) 
 
-tot_cov_values <- vacc_child_coverage_values * population_coverage_values
+tot_cov_values <- as.vector(outer(vacc_child_coverage_values, population_coverage_values))
 
 vacc_child_cov <- tot_cov_values[1]
 
@@ -78,9 +80,7 @@ params <- list(DT = my_dt,
 # load data -------------------------------------------------------------------
 
 
-# microcephaly risk during pregnancy
 mr_pregn_data <- readRDS(file.path("output", "microcephaly_risk_probs.rds"))
-
 
 br_brazil_age <- readRDS(file.path("output", "age_specific_birth_rates.rds"))
 
@@ -124,6 +124,12 @@ time <- max(tt)
 
 brks <- seq(from = 0, to = time, by = 364 * plot_interval)
 
+MC <- calculate_microcases(N_inf = n_infections, 
+                           pregnancy_risk_curve = mr_pregn_data, 
+                           birth_rates = br_brazil_age, 
+                           N_tot = Ntotal, 
+                           baseline_probM = mr_baseline)
+
 
 # plot number of new infections -----------------------------------------------
 
@@ -131,33 +137,50 @@ brks <- seq(from = 0, to = time, by = 364 * plot_interval)
 ## by age, patches and vaccine status
 melted_array_full <- melt_sim_output_array(n_infections, tt)
 
-melted_array <- subset(melted_array_full, vaccine == 1 & patch == 1)
+melted_array_nv <- subset(melted_array_full, vaccine == 1 & patch == 1)
 
-p <- plot_diagnostics_by_age(melted_array, "new infections", "Non vaccinated")
+p1 <- plot_diagnostics_by_age(melted_array_nv, "new infections", "Non vaccinated")
 
-melted_array_2 <- subset(melted_array_full, vaccine == 2 & patch == 1)
+melted_array_v <- subset(melted_array_full, vaccine == 2 & patch == 1)
 
-p2 <- plot_diagnostics_by_age(melted_array_2, "new infections", "Vaccinated")
-  
+p2 <- plot_diagnostics_by_age(melted_array_v, "new infections", "Vaccinated")
+ 
+ 
 ## by patches and vaccine status
 sum_over_ages <- sum_across_array_dims(n_infections, c(1, 3, 4))
 
 Nt_sum_over_ages <- sum_across_array_dims(Ntotal, c(1, 3, 4))
 
-prop_sum_over_ages <- sum_over_ages / Nt_sum_over_ages
+prop_sum_over_ages <- ifelse(Nt_sum_over_ages == 0, 0, sum_over_ages / Nt_sum_over_ages)
 
-melted_sum <- melt_sim_output_array_2(prop_sum_over_ages, tt)
+melted_sum_a <- melt_sim_output_array_2(prop_sum_over_ages, tt)
 
-p <- ggplot(data = melted_sum) +
-  geom_line(aes(x = time, y = value, colour = vaccine)) +
-  facet_wrap(~ patch)
+p3 <- plot_diagnostics_by_p_v(melted_sum_a, "vaccine", "new infections (prop)")
+
+melted_sum_a_b <- melt_sim_output_array_2(sum_over_ages, tt)
   
-# ## by vaccine status
-# sum_over_ages_patches <- sum_across_array_dims(n_infections, c(1, 3))
-# 
-# melted_sum <- melt_sim_output_array_3(sum_over_ages_patches, tt)
-# 
-# p <- ggplot(data = melted_sum) +
-#   geom_line(aes(x = time, y = value, colour = vaccine_status))
-# 
-# p
+p3_b <- plot_diagnostics_by_p_v(melted_sum_a_b, "vaccine", "new infections")
+
+
+## by vaccine status
+sum_over_ages_patches <- sum_across_array_dims(n_infections, c(1, 3))
+
+Nt_sum_over_ages_patches <- sum_across_array_dims(Ntotal, c(1, 3))
+
+prop_sum_over_ages_patches <- ifelse(Nt_sum_over_ages_patches == 0, 0, 
+                                     sum_over_ages_patches / Nt_sum_over_ages_patches)
+
+melted_sum_a_p <- melt_sim_output_array_3(prop_sum_over_ages_patches, tt)
+
+p4 <- plot_diagnostics_by_vaccine(melted_sum_a_p, "vaccine", "new infections") 
+
+
+# save plots ------------------------------------------------------------------
+
+
+save_plot(p1, out_fig_dir, "inf_1_by_age_nv", wdt = 12, hgt = 8)
+save_plot(p2, out_fig_dir, "inf_1_by_age_v", wdt = 12, hgt = 8)
+save_plot(p3, out_fig_dir, "inf_1_by_patch_vaccine_prop", wdt = 17, hgt = 15)
+save_plot(p3_b, out_fig_dir, "inf_1_by_patch_vaccine_n", wdt = 17, hgt = 15)
+save_plot(p4, out_fig_dir, "inf_1_by_vaccine", wdt = 12, hgt = 8)
+

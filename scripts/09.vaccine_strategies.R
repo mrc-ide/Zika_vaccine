@@ -120,8 +120,6 @@ tt <- out$TIME
 
 time <- max(tt)
 
-brks <- seq(from = 0, to = time, by = 364 * plot_interval)
-
 MC <- calculate_microcases(N_inf = n_infections, 
                            pregnancy_risk_curve = mr_pregn_data, 
                            birth_rates = br_brazil_age, 

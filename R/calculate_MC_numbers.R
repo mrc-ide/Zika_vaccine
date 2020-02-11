@@ -53,3 +53,13 @@ calculate_microcases_baseline <- function(N_tot, baseline_probM, birth_rates) {
   sweep(N_tot / 2, MARGIN = 2, birth_rates * baseline_probM, "*")
 
 }
+
+calculate_microcases <- function(N_inf, pregnancy_risk_curve, birth_rates, N_tot, baseline_probM) {
+  
+  a <- calculate_microcases_ZIKV(N_inf, pregnancy_risk_curve, birth_rates)  
+  
+  b <- calculate_microcases_baseline(N_tot, baseline_probM, birth_rates)
+  
+  a + b
+  
+}

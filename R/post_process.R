@@ -1,10 +1,10 @@
-post_process <- function(i, dat, time, exp_des) {
+cbind_id_time <- function(i, dat, time) {
   
   # browser()
   
-  x <- dat[[i]]
+  value <- dat[[i]]
     
-  cbind(id = i, time = time, x)  
+  cbind(id = i, time = time, value)  
   
 }
 

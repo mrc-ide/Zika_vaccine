@@ -15,6 +15,10 @@ give_col_names <- function(x){
 
 plot_diagnostics_by_age <- function(df, y_lab_title, ttl = NULL) {
   
+  plot_interval <- 5 # years
+  
+  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
+  
   p <- ggplot(df) +
     geom_line(aes(x = time, y = value, colour = age)) +
     scale_fill_viridis() +
@@ -36,6 +40,10 @@ plot_diagnostics_by_age <- function(df, y_lab_title, ttl = NULL) {
 }
 
 plot_diagnostics_by_patch <- function(df, y_lab_title, ttl = NULL) {
+  
+  plot_interval <- 5 # years
+  
+  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
   
   p <- ggplot(df) +
     geom_line(aes(x = time, y = value), colour = "#63B8FF") +
@@ -59,6 +67,10 @@ plot_diagnostics_by_patch <- function(df, y_lab_title, ttl = NULL) {
 
 plot_diagnostics_by_vaccine <- function(df, v_var, y_lab_title, ttl = NULL) {
   
+  plot_interval <- 5 # years
+  
+  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
+  
   p <- ggplot(df) +
     geom_line(aes_string(x = "time", y = "value", colour = v_var)) +
     scale_y_continuous(name = y_lab_title) +
@@ -79,6 +91,10 @@ plot_diagnostics_by_vaccine <- function(df, v_var, y_lab_title, ttl = NULL) {
 }
 
 plot_diagnostics_by_p_v <- function(df, v_var, y_lab_title, ttl = NULL) {
+  
+  plot_interval <- 5 # years
+  
+  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
   
   p <- ggplot(df) +
     geom_line(aes_string(x = "time", y = "value", colour = v_var)) +

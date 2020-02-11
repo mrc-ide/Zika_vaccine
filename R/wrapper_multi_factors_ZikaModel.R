@@ -2,23 +2,18 @@ wrapper_multi_factors_ZikaModel_2 <- function(x,
                                               agec, 
                                               death,
                                               vaccine_age,
-                                              my_dt,
+                                              params,
                                               integer_time_steps,
-                                              season) {
+                                              season = FALSE) {
   
   odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
   
-  vacc_coverage <- x$vacc_cov
-  pop_coverage <- x$pop_cov
+  id <- x$id
   tot_coverage <- x$tot_cov
   vacc_start <- x$start
   vacc_stop <- x$stop
   
-  id <- x$id
-    
   message("ID = ", id)
-  message("vaccination coverage = ", vacc_coverage)
-  message("population coverage = " , pop_coverage)
   message("total coverage = ", tot_coverage)
   message("start time = " , vacc_start)
   message("stop time = ", vacc_stop)
@@ -27,17 +22,19 @@ wrapper_multi_factors_ZikaModel_2 <- function(x,
   message("----------------------------------------------------------")
   
   
+  factorial_params <- list(vacc_child_coverage = tot_coverage,
+                           vacc_child_starttime = vacc_start,
+                           vacc_child_stoptime = vacc_stop)
+  
+  params <- c(params, factorial_params)
+  
   create_generator <- ZikaModel::create_r_model(odin_model_path = odin_model_path,
                                                 agec = agec,
                                                 death = death,
                                                 nn_links = nn_links,
                                                 amplitudes_phases,
                                                 vaccine_age = vaccine_age,
-                                                DT = my_dt,
-                                                season = season,
-                                                vacc_child_coverage = tot_coverage,
-                                                vacc_child_starttime = vacc_start,
-                                                vacc_child_stoptime = vacc_stop)
+                                                params = params)
   
   gen <- create_generator$generator(user = create_generator$state)
   

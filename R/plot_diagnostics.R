@@ -88,7 +88,8 @@ plot_diagnostics_by_p_v <- function(df, v_var, y_lab_title, ttl = NULL) {
     theme_bw() +
     theme(axis.text.x = element_text(size = 8),
           axis.text.y = element_text(size = 8),
-          strip.text.x = element_text(size = 8))
+          strip.text.x = element_text(size = 8),
+          legend.position = "bottom")
   
   if(!is.null(ttl)) {
     

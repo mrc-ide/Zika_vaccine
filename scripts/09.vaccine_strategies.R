@@ -18,7 +18,7 @@ source(file.path("R", "calculate_MC_numbers.R"))
 # define parameters -----------------------------------------------------------
 
 
-experiment_name <- "vaccine_strategies"
+experiment_name <- "vaccine_strategies_high_cov"
 
 out_fig_dir <- file.path("figures", experiment_name)
 
@@ -50,8 +50,6 @@ mr_baseline <- 0.0002
 
 N_human_brazil <- 200000000
 
-season <- FALSE
-
 plot_interval <- 5 # years
 
 vacc_child_coverage_values <- c(0.5, 0.8)
@@ -68,7 +66,7 @@ vacc_ages <- c(0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0)
 
 tot_cov_values <- as.vector(outer(vacc_child_coverage_values, population_coverage_values))
 
-vacc_child_cov <- tot_cov_values[1]
+vacc_child_cov <- tot_cov_values[4]
 
 params <- list(DT = my_dt,
                N_human = N_human_brazil,
@@ -180,7 +178,6 @@ p4 <- plot_diagnostics_by_vaccine(melted_sum_a_p, "vaccine", "new infections")
 
 save_plot(p1, out_fig_dir, "inf_1_by_age_nv", wdt = 12, hgt = 8)
 save_plot(p2, out_fig_dir, "inf_1_by_age_v", wdt = 12, hgt = 8)
-save_plot(p3, out_fig_dir, "inf_1_by_patch_vaccine_prop", wdt = 17, hgt = 15)
-save_plot(p3_b, out_fig_dir, "inf_1_by_patch_vaccine_n", wdt = 17, hgt = 15)
+save_plot(p3, out_fig_dir, "inf_1_by_patch_vaccine_prop", wdt = 17, hgt = 17)
+save_plot(p3_b, out_fig_dir, "inf_1_by_patch_vaccine_n", wdt = 17, hgt = 17)
 save_plot(p4, out_fig_dir, "inf_1_by_vaccine", wdt = 12, hgt = 8)
-

@@ -1,4 +1,39 @@
 
+plot_diagnostics <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
+  
+  plot_interval <- 5 # years
+  
+  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
+  
+  if(is.null(y_lim)) {
+    
+    my_y_lim <- c(y_lim[1], y_lim[2])  
+    
+  } else {
+    
+    my_y_lim <- NULL
+    
+  }
+  
+  p <- ggplot(df) +
+    geom_line(aes(x = time, y = value), colour = "#63B8FF") +
+    scale_y_continuous(name = y_lab_title, limits = my_y_lim) +
+    scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
+    theme_bw() +
+    theme(axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          strip.text.x = element_text(size = 8))
+  
+  if(!is.null(ttl)) {
+    
+    p <- p + ggtitle(ttl)
+    
+  }
+  
+  p
+  
+}
+
 plot_diagnostics_by_age <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
   
   plot_interval <- 5 # years

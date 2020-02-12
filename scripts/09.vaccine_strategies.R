@@ -18,7 +18,9 @@ source(file.path("R", "calculate_MC_numbers.R"))
 # define parameters -----------------------------------------------------------
 
 
-experiment_name <- file.path("vaccine_strategies", "high_cov")
+trial_name <- "no_coverage"
+
+experiment_name <- file.path("vaccine_strategies", trial_name)
 
 out_fig_dir <- file.path("figures", experiment_name)
 
@@ -52,7 +54,7 @@ N_human_brazil <- 200000000
 
 plot_interval <- 5 # years
 
-vacc_child_coverage_values <- c(0.5, 0.8)
+vacc_child_coverage_values <- c(0, 0.5, 0.8, 1)
 
 population_coverage_values <- c(0.5, 1)
   
@@ -62,11 +64,11 @@ vacc_starttime <- 1.5
 vacc_stoptime <- vacc_starttime + 0.2 
 
 # from 9 to 49
-vacc_ages <- c(0, 0, 1, 1, 1, 1, 0, 0, 0, 0, 0) 
+vacc_ages <- c(0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0) 
 
 tot_cov_values <- as.vector(outer(vacc_child_coverage_values, population_coverage_values))
 
-vacc_child_cov <- tot_cov_values[4]
+vacc_child_cov <- tot_cov_values[1]
 
 params <- list(DT = my_dt,
                N_human = N_human_brazil,
@@ -166,16 +168,56 @@ Nt_sum_over_ages_patches <- sum_across_array_dims(Ntotal, c(1, 3))
 prop_sum_over_ages_patches <- ifelse(Nt_sum_over_ages_patches == 0, 0, 
                                      sum_over_ages_patches / Nt_sum_over_ages_patches)
 
-melted_sum_a_p <- melt_sim_output_array_3(prop_sum_over_ages_patches, tt)
+melted_sum_a_p <- melt_sim_output_array_3(prop_sum_over_ages_patches, tt, "vaccine")
 
 p4 <- plot_diagnostics_by_vaccine(melted_sum_a_p, "vaccine", "new infections") 
+
+
+## total
+sum_over_ages_patches_vaccine_inf_1 <- sum_across_array_dims(n_infections, 1)
+
+inf_1_df <- cbind_time(sum_over_ages_patches_vaccine_inf_1, tt)
+
+p5 <- plot_diagnostics(inf_1_df, "new nfections", ttl = gsub("_+", " ", trial_name))
+
+
+# plot MC ---------------------------------------------------------------------
+
+
+## by age, patches and vaccine status
+melted_array_full_MC <- melt_sim_output_array(MC, tt)
+
+melted_array_MC_nv <- subset(melted_array_full_MC, vaccine == 1 & patch == 1)
+
+p6 <- plot_diagnostics_by_age(melted_array_MC_nv, "microcephaly cases", "Non vaccinated")
+
+melted_array_MC_v <- subset(melted_array_full_MC, vaccine == 2 & patch == 1)
+
+p7 <- plot_diagnostics_by_age(melted_array_MC_v, "microcephaly cases", "Vaccinated")
+
+
+## total
+sum_over_ages_patches_vaccine_MC <- sum_across_array_dims(MC, 1)
+
+MC_df <- cbind_time(sum_over_ages_patches_vaccine_MC, tt)
+  
+p8 <- plot_diagnostics(MC_df, "microcephaly cases", ttl = gsub("_+", " ", trial_name))
 
 
 # save plots ------------------------------------------------------------------
 
 
-save_plot(p1, out_fig_dir, "inf_1_by_age_nv", wdt = 12, hgt = 8)
-save_plot(p2, out_fig_dir, "inf_1_by_age_v", wdt = 12, hgt = 8)
-save_plot(p3, out_fig_dir, "inf_1_by_patch_vaccine_prop", wdt = 17, hgt = 17)
-save_plot(p3_b, out_fig_dir, "inf_1_by_patch_vaccine_n", wdt = 17, hgt = 17)
-save_plot(p4, out_fig_dir, "inf_1_by_vaccine", wdt = 12, hgt = 8)
+tag <- "inf_1"
+
+save_plot(p1, out_fig_dir, sprintf("%s_vaccine_%s_patch_%s", tag, 1, 1), wdt = 12, hgt = 8)
+save_plot(p2, out_fig_dir, sprintf("%s_vaccine_%s_patch_%s", tag, 2, 1), wdt = 12, hgt = 8)
+save_plot(p3, out_fig_dir, paste0(tag, "_by_patch_vaccine_prop"), wdt = 17, hgt = 17)
+save_plot(p3_b, out_fig_dir, paste0(tag, "_by_patch_vaccine_n"), wdt = 17, hgt = 17)
+save_plot(p4, out_fig_dir, paste0(tag, "_by_vaccine"), wdt = 12, hgt = 8)
+save_plot(p5, out_fig_dir, paste0(tag, "_total"), wdt = 12, hgt = 8)
+
+tag_2 <- "microcephaly_cases"
+
+save_plot(p6, out_fig_dir, sprintf("%s_vaccine_%s_patch_%s", tag_2, 1, 1), wdt = 12, hgt = 8)
+save_plot(p7, out_fig_dir, sprintf("%s_vaccine_%s_patch_%s", tag_2, 2, 1), wdt = 12, hgt = 8)
+save_plot(p8, out_fig_dir, sprintf("%s_tot", tag_2), wdt = 12, hgt = 8)

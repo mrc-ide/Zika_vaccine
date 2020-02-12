@@ -19,7 +19,7 @@ source(file.path("R", "average.R"))
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "microcephaly_risk")
+out_dir <- file.path("figures", "microcephaly_risk", "second")
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -35,7 +35,7 @@ deathrt <- c(1e-10,
              0.279105747097929,
              0.390197266957464)
 
-time_years <- 5 # years
+time_years <- 50 # years
 
 my_dt <- 1
 
@@ -46,8 +46,10 @@ mr_baseline <- 0.0002
 N_human_brazil <- 200000000
 season <- FALSE
 
-plot_interval <- 0.5 # years
+plot_interval <- 5 # years
 
+params <- list(DT = my_dt,
+               N_human = N_human_brazil)
 
 # load data -------------------------------------------------------------------
 
@@ -69,9 +71,7 @@ create_generator <- create_r_model(odin_model_path = odin_model_path,
                                    death = deathrt,
                                    nn_links = nn_links,
                                    amplitudes_phases = amplitudes_phases,
-                                   DT = my_dt,
-                                   season = season,
-                                   N_human = N_human_brazil)
+                                   params = params)
 
 gen <- create_generator$generator(user = create_generator$state)
 
@@ -113,7 +113,10 @@ save_plot(p,
           wdt = 12,
           hgt = 8)
 
-inf_1_melt_p <- melt_by_patch(n_infections, tt)
+#inf_1_melt_p <- melt_by_patch(n_infections, tt)
+sum_over_ages_vaccine <- sum_across_array_dims(n_infections, c(1, 4)) 
+
+inf_1_melt_p <- melt_sim_output_array_3(sum_over_ages_vaccine, tt, "patch")
 
 inf_1_melt_p_plot <- plot_diagnostics_by_patch(inf_1_melt_p, "inf_1")
 
@@ -155,15 +158,18 @@ save_plot(p3,
 # plot by patch ---------------------------------------------------------------
 
 
-MC_tot_melt <- melt_by_patch(MC_tot, tt)
+#MC_tot_melt <- melt_by_patch(MC_tot, tt)
+sum_over_ages_vaccine_MC <- sum_across_array_dims(MC_tot, c(1, 4)) 
 
-MC_tot_plot_p <- plot_diagnostics_by_patch(MC_tot_melt, "microcephaly cases")
+MC_tot_melt_p <- melt_sim_output_array_3(sum_over_ages_vaccine_MC, tt, "patch")
+
+MC_tot_plot_p <- plot_diagnostics_by_patch(MC_tot_melt_p, "microcephaly cases")
 
 # time window of the first epidemic, years
 from_t <- 1
 to_t <- 3
 
-MC_tot_w <- summarize_in_window(MC_tot_melt, from_t, to_t)
+MC_tot_w <- summarize_in_window(MC_tot_melt_p, from_t, to_t)
   
 MC_tot_plot_p_2 <- MC_tot_plot_p + 
   geom_text(data = MC_tot_w, 
@@ -213,11 +219,14 @@ n_tot <- out$Ntotal
   
 n_births <- sweep(n_tot/2, MARGIN = 2, br_brazil_age, "*")
 
-n_births_melt <- melt_by_patch(n_births, tt)
+#n_births_melt <- melt_by_patch(n_births, tt)
+sum_over_ages_vaccine_births <- sum_across_array_dims(n_births, c(1, 4)) 
 
-n_births_plot_p <- plot_diagnostics_by_patch(n_births_melt, "births")
+n_births_melt_p <- melt_sim_output_array_3(sum_over_ages_vaccine_births, tt, "patch")
 
-n_births_w <- summarize_in_window(n_births_melt, from_t, to_t)
+n_births_plot_p <- plot_diagnostics_by_patch(n_births_melt_p, "births")
+
+n_births_w <- summarize_in_window(n_births_melt_p, from_t, to_t)
 
 n_births_plot_p_2 <- n_births_plot_p + 
   geom_text(data = n_births_w, 

@@ -29,6 +29,7 @@ melt_sim_output_array <- function(array_to_melt, TIME) {
   combs <- no_age * no_vaccine * no_patch
   tt_long <- rep(TIME, combs)
   full_melt$time <- tt_long
+  
   full_melt$age <- factor(full_melt$age,
                           levels = unique(full_melt$age),
                           labels = unique(full_melt$age))
@@ -55,19 +56,19 @@ melt_sim_output_array_2 <- function(array_to_melt, TIME) {
   
 }
 
-melt_sim_output_array_3 <- function(array_to_melt, TIME) {
+melt_sim_output_array_3 <- function(array_to_melt, TIME, var_name) {
   
-  vaccine_status <- 2
+  no_levels <- ncol(array_to_melt)
   
   df <- as.data.frame(array_to_melt)
   
-  names(df) <- seq_len(vaccine_status)
+  names(df) <- seq_len(no_levels)
   
   df$time <- TIME
   
   reshape2::melt(df,
                  id.vars = "time",
-                 variable.name = "vaccine")
+                 variable.name = var_name)
   
 }
 

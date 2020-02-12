@@ -1,28 +1,24 @@
-add_diagno_name_var <- function(x, b){
-  b[[x]]$diagnostics <- names(b[x])
-  b[[x]]
-}
 
-add_time_var <- function(x){
-  x$time <- tt
-  x
-}
-
-give_col_names <- function(x){
-  colnames(x) <- as.character(seq_len(11))
-  x
-}
-
-plot_diagnostics_by_age <- function(df, y_lab_title, ttl = NULL) {
+plot_diagnostics_by_age <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
   
   plot_interval <- 5 # years
   
   brks <- seq(from = 0, to = time, by = 364 * plot_interval)
   
+  if(is.null(y_lim)) {
+    
+    my_y_lim <- c(y_lim[1], y_lim[2])  
+  
+  } else {
+    
+    my_y_lim <- NULL
+  
+  }
+    
   p <- ggplot(df) +
     geom_line(aes(x = time, y = value, colour = age)) +
     scale_fill_viridis() +
-    scale_y_continuous(name = y_lab_title) +
+    scale_y_continuous(name = y_lab_title, limits = my_y_lim) +
     scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
     theme_bw() +
     theme(axis.text.x = element_text(size = 8),

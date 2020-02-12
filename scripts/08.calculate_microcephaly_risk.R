@@ -19,7 +19,7 @@ source(file.path("R", "average.R"))
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "microcephaly_risk", "second")
+out_dir <- file.path("figures", "microcephaly_risk", "longer_time")
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 

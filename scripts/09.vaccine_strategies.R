@@ -18,7 +18,7 @@ source(file.path("R", "calculate_MC_numbers.R"))
 # define parameters -----------------------------------------------------------
 
 
-trial_name <- "no_coverage"
+trial_name <- "high_coverage"
 
 experiment_name <- file.path("vaccine_strategies", trial_name)
 
@@ -54,7 +54,7 @@ N_human_brazil <- 200000000
 
 plot_interval <- 5 # years
 
-vacc_child_coverage_values <- c(0, 0.5, 0.8, 1)
+vacc_child_coverage_values <- c(0.5, 0.8)
 
 population_coverage_values <- c(0.5, 1)
   
@@ -66,9 +66,9 @@ vacc_stoptime <- vacc_starttime + 0.2
 # from 9 to 49
 vacc_ages <- c(0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0) 
 
-tot_cov_values <- as.vector(outer(vacc_child_coverage_values, population_coverage_values))
+tot_cov_values <- c(0, as.vector(outer(vacc_child_coverage_values, population_coverage_values)), 1)
 
-vacc_child_cov <- tot_cov_values[1]
+vacc_child_cov <- tot_cov_values[5]
 
 params <- list(DT = my_dt,
                N_human = N_human_brazil,

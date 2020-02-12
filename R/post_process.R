@@ -3,14 +3,22 @@ add_diagno_name_var <- function(x, b){
   b[[x]]
 }
 
+give_col_names <- function(x){
+  colnames(x) <- as.character(seq_len(11))
+  x
+}
+
 add_time_var <- function(x){
   x$time <- tt
   x
 }
 
-give_col_names <- function(x){
-  colnames(x) <- as.character(seq_len(11))
-  x
+cbind_time <- function(x, time) {
+  
+  out <- cbind(time = time, value = x)  
+  
+  as.data.frame(out)
+  
 }
 
 cbind_id_time <- function(i, dat, time) {
@@ -19,7 +27,9 @@ cbind_id_time <- function(i, dat, time) {
   
   value <- dat[[i]]
     
-  cbind(id = i, time = time, value)  
+  out <- cbind(id = i, time = time, value)  
+  
+  as.data.frame(out)
   
 }
 

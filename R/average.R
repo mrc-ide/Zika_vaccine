@@ -1,3 +1,16 @@
+
+sum_across_array_dims <- function(array_to_sum, dim_to_keep) {
+  
+  apply(array_to_sum, dim_to_keep, sum)
+  
+}
+
+cumsum_across_array_dims <- function(array_to_sum, dim_to_keep) {
+  
+  apply(array_to_sum, dim_to_keep, cumsum)
+  
+}
+
 apply_mean_across_patches <- function(x){
   
   # browser()

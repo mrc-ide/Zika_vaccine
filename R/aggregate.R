@@ -50,3 +50,45 @@ summarize_in_window <- function(melted_array, from_t, to_t) {
   
 }
 
+lag_diff_array <- my_fun <- function(my_array, lag_time) {
+  
+  dims <- dim(my_array)
+  
+  dim_1 <- dims[3]
+  dim_2 <- dims[4]
+  
+  out <- array(0, dim = dims)
+  
+  for (i in seq_len(dim_1)) {
+    
+    for (j in seq_len(dim_2)) {
+      
+      # browser()
+      
+      out[,,i,j] <- lag_diff(my_array[,,i,j], lag_time)
+      
+    }
+    
+  }
+  
+  out
+  
+}
+
+calculate_incidence <- function(new_infections, N, time_window) {
+  
+  if(time_window == 1) {
+    
+    lag_diff <- new_infections
+    
+  } else {
+    
+    cum_sum <- cumsum_across_array_dims(new_infections, c(2, 3, 4))
+    
+    lag_diff <- lag_diff_array(cum_sum, time_window)
+    
+  }
+  
+  lag_diff / N * 1000
+  
+}

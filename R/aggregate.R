@@ -11,7 +11,7 @@ cumsum_across_array_dims <- function(array_to_sum, dim_to_keep) {
   
 }
 
-apply_mean_across_patches <- function(x){
+apply_mean_across_patches <- function(x) {
   
   # browser()
   
@@ -75,20 +75,32 @@ lag_diff_array <- my_fun <- function(my_array, lag_time) {
   
 }
 
-calculate_incidence <- function(new_infections, N, time_window) {
+calculate_incidence <- function(cum_infections, Ntotal, time_window) {
+  
+  n_dims <- length(dim(cum_infections))
   
   if(time_window == 1) {
     
-    lag_diff <- new_infections
+    out <- cum_infections
     
-  } else {
+  } 
+  
+  if(time_window > 1) {
     
-    cum_sum <- cumsum_across_array_dims(new_infections, c(2, 3, 4))
+    if(n_dims == 0 | n_dims == 2) {
+      
+      out <- lag_diff(cum_infections, time_window)
+      
+    } 
     
-    lag_diff <- lag_diff_array(cum_sum, time_window)
+    if(n_dims == 4) {
+      
+      out <- lag_diff_array(cum_infections, time_window)
+      
+    }
     
   }
   
-  lag_diff / N * 1000
+  ifelse(Ntotal == 0, 0, out / Ntotal * 1000)
   
 }

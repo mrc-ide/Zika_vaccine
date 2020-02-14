@@ -1,5 +1,5 @@
 
-plot_diagnostics <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
+simple_plot <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
   
   plot_interval <- 5 # years
   
@@ -34,7 +34,7 @@ plot_diagnostics <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
   
 }
 
-plot_diagnostics_by_age <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
+plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL, y_lim = NULL) {
   
   plot_interval <- 5 # years
   
@@ -51,7 +51,8 @@ plot_diagnostics_by_age <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
   }
     
   p <- ggplot(df) +
-    geom_line(aes(x = time, y = value, colour = age)) +
+    geom_line(aes_string(x = "time", y = "value", colour = line_var)) +
+    facet_wrap(as.formula(paste("~", facet_var)), ncol = 1) +
     scale_fill_viridis() +
     scale_y_continuous(name = y_lab_title, limits = my_y_lim) +
     scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +

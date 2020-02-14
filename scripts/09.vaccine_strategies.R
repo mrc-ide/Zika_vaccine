@@ -7,25 +7,18 @@ library(ggplot2)
 library(viridis)
 
 source(file.path("R", "utility_functions.R"))
-source(file.path("R", "wrapper_multi_factors_ZikaModel.R"))
 source(file.path("R", "calculate_MC_numbers.R"))
 source(file.path("R", "reshape.R"))
+source(file.path("R", "aggregate.R"))
 source(file.path("R", "post_process.R"))
 source(file.path("R", "plot_diagnostics.R"))
-source(file.path("R", "calculate_MC_numbers.R"))
 
 
 # define parameters -----------------------------------------------------------
 
 
-trial_name <- "high_coverage"
-
-experiment_name <- file.path("vaccine_strategies", trial_name)
-
-out_fig_dir <- file.path("figures", experiment_name)
-
-out_tab_dir <- file.path("output", experiment_name)
-
+my_cov_value <- 0.25
+  
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
 deathrt <- c(1e-10,
@@ -44,13 +37,7 @@ time_years <- 50 # years
 
 my_dt <- 1
 
-integer_time_steps <- (364 * time_years) / my_dt
-
-its <- seq(0, integer_time_steps, 1)
-
 mr_baseline <- 0.0002
-
-N_human_brazil <- 200000000
 
 plot_interval <- 5 # years
 
@@ -66,12 +53,41 @@ vacc_stoptime <- vacc_starttime + 0.2
 # from 9 to 49
 vacc_ages <- c(0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0) 
 
-tot_cov_values <- c(0, as.vector(outer(vacc_child_coverage_values, population_coverage_values)), 1)
+odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
 
-vacc_child_cov <- tot_cov_values[5]
+trial_name <- paste0("coverage_", my_cov_value * 100)
+
+pl_ttl <- gsub("_+", " ", trial_name)
+
+
+# pre processing --------------------------------------------------------------
+
+
+experiment_name <- file.path("vaccine_strategies", trial_name)
+
+out_fig_dir <- file.path("figures", experiment_name)
+
+out_tab_dir <- file.path("output", experiment_name)
+
+tags <- c("infections", "weekly_infections", "microcephaly_cases", "weekly_microcephaly_cases")
+
+plot_type <- c("by_age", "by_patch", "by_vaccine", "total") 
+
+all_combs <- expand.grid(tags, plot_type)
+
+out_fl_nms <- paste(all_combs$Var1, all_combs$Var2, sep = "_")
+
+vacc_pop_cov_combs <- as.vector(outer(vacc_child_coverage_values, population_coverage_values))
+
+tot_cov_values <- c(0, vacc_pop_cov_combs, 1)
+
+vacc_child_cov <- tot_cov_values[tot_cov_values == my_cov_value]
+
+integer_time_steps <- (364 * time_years) / my_dt
+
+its <- seq(0, integer_time_steps, 1)
 
 params <- list(DT = my_dt,
-               N_human = N_human_brazil,
                vacc_child_coverage = vacc_child_cov,
                vacc_child_starttime = vacc_starttime,
                vacc_child_stoptime = vacc_stoptime)
@@ -88,8 +104,6 @@ br_brazil_age <- readRDS(file.path("output", "age_specific_birth_rates.rds"))
 # run -------------------------------------------------------------------------
 
 
-odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
-
 create_generator <- create_r_model(odin_model_path = odin_model_path,
                                    agec = age_init,
                                    death = deathrt,
@@ -100,10 +114,6 @@ create_generator <- create_r_model(odin_model_path = odin_model_path,
 
 gen <- create_generator$generator(user = create_generator$state)
 
-integer_time_steps <- (364 * time_years) / my_dt
-
-its <- seq(0, integer_time_steps, 1)
-
 mod_run <- gen$run(its)
 
 
@@ -112,7 +122,7 @@ mod_run <- gen$run(its)
 
 out <- gen$transform_variables(mod_run)
 
-n_infections <- out$inf_1
+infections <- out$inf_1
 
 Ntotal <- out$Ntotal
 
@@ -122,102 +132,122 @@ tt <- out$TIME
 
 time <- max(tt)
 
-MC <- calculate_microcases(N_inf = n_infections, 
+MC <- calculate_microcases(N_inf = infections, 
                            pregnancy_risk_curve = mr_pregn_data, 
                            birth_rates = br_brazil_age, 
                            N_tot = Ntotal, 
                            baseline_probM = mr_baseline)
 
+## aggregate (age, vaccine status, patch)
+sum_av_infections <- sum_across_array_dims(infections, c(1, 4))
+sum_ap_infections <- sum_across_array_dims(infections, c(1, 3))
+sum_apv_infections <- sum_across_array_dims(infections, 1)
 
-# plot number of new infections -----------------------------------------------
+sum_av_MC <- sum_across_array_dims(MC, c(1, 4))
+sum_ap_MC <- sum_across_array_dims(MC, c(1, 3))
+sum_apv_MC <- sum_across_array_dims(MC, 1)
+
+sum_av_Ntotal <- sum_across_array_dims(Ntotal, c(1, 4))
+sum_ap_Ntotal <- sum_across_array_dims(Ntotal, c(1, 3))
+sum_apv_Ntotal <- sum_across_array_dims(Ntotal, 1)
+
+## cumulative sums (time)
+cumsum_infections <- cumsum_across_array_dims(infections, c(2, 3, 4))
+cumsum_sum_av_infections <- cumsum_across_array_dims(sum_av_infections, 2)
+cumsum_sum_ap_infections <- cumsum_across_array_dims(sum_ap_infections, 2)
+cumsum_sum_apv_infections <- cumsum(sum_apv_infections)
+
+cumsum_MC <- cumsum_across_array_dims(MC, c(2, 3, 4))
+cumsum_sum_av_MC <- cumsum_across_array_dims(sum_av_MC, 2)
+cumsum_sum_ap_MC <- cumsum_across_array_dims(sum_ap_MC, 2)
+cumsum_sum_apv_MC <- cumsum(sum_apv_MC)
+
+## calculate incidence 
+weekly_infections <- calculate_incidence(cumsum_infections, Ntotal, 7)
+weekly_infections_patch <- calculate_incidence(cumsum_sum_av_infections, sum_av_Ntotal, 7)
+weekly_infections_vaccine <- calculate_incidence(cumsum_sum_ap_infections, sum_ap_Ntotal, 7)
+weekly_infections_total <- calculate_incidence(cumsum_sum_apv_infections, sum_apv_Ntotal, 7)
+
+weekly_MC <- calculate_incidence(cumsum_MC, Ntotal, 7)
+weekly_MC_patch <- calculate_incidence(cumsum_sum_av_MC, sum_av_Ntotal, 7)
+weekly_MC_vaccine <- calculate_incidence(cumsum_sum_ap_MC, sum_ap_Ntotal, 7)
+weekly_MC_total <- calculate_incidence(cumsum_sum_apv_MC, sum_apv_Ntotal, 7)
+
+## reshape (for plotting)
+melt_infections <- melt_sim_output_array(infections, tt)
+melt_sum_av_infections <- melt_sim_output_array_3(sum_av_infections, tt, "patch")
+melt_sum_ap_infections <- melt_sim_output_array_3(sum_ap_infections, tt, "vaccine")
+melt_sum_apv_infections <- cbind_time(sum_apv_infections, tt)
+
+melt_w_infections <- melt_sim_output_array(weekly_infections, tt)
+melt_sum_av_w_infections <- melt_sim_output_array_3(weekly_infections_patch, tt, "patch")
+melt_sum_ap_w_infections <- melt_sim_output_array_3(weekly_infections_vaccine, tt, "vaccine")
+melt_sum_apv_w_infections <- cbind_time(weekly_infections_total, tt)
+
+melt_MC <- melt_sim_output_array(MC, tt)
+melt_sum_av_MC <- melt_sim_output_array_3(sum_av_MC, tt, "patch")
+melt_sum_ap_MC <- melt_sim_output_array_3(sum_ap_MC, tt, "vaccine")
+melt_sum_apv_MC <- cbind_time(sum_apv_MC, tt)
+
+melt_w_MC <- melt_sim_output_array(weekly_MC, tt)
+melt_sum_av_w_MC <- melt_sim_output_array_3(weekly_MC_patch, tt, "patch")
+melt_sum_ap_w_MC <- melt_sim_output_array_3(weekly_MC_vaccine, tt, "vaccine")
+melt_sum_apv_w_MC <- cbind_time(weekly_MC_total, tt)
+
+## subset patch 1
+melt_infections_p1 <- subset(melt_infections, patch == 1)
+melt_w_infections_p1 <- subset(melt_w_infections, patch == 1)
+melt_MC_p1 <- subset(melt_MC, patch == 1)
+melt_w_MC_p1 <- subset(melt_w_MC, patch == 1)
 
 
-## by age, patches and vaccine status
-melted_array_full <- melt_sim_output_array(n_infections, tt)
+# plotting --------------------------------------------------------------------
 
-melted_array_nv <- subset(melted_array_full, vaccine == 1 & patch == 1)
 
-p1 <- plot_diagnostics_by_age(melted_array_nv, "new infections", "Non vaccinated")
+## by age, patch and vaccine status
+p_01 <- plot_by_line_facet(melt_infections_p1, "age", "vaccine", "infections", pl_ttl)
+p_02 <- plot_by_line_facet(melt_w_infections_p1, "age", "vaccine", "weekly infections/1000", pl_ttl)
+p_03 <- plot_by_line_facet(melt_MC_p1, "age", "vaccine", "micro cases", pl_ttl)
+p_04 <- plot_by_line_facet(melt_w_MC_p1, "age", "vaccine", "weekly micro cases/1000", pl_ttl)
 
-melted_array_v <- subset(melted_array_full, vaccine == 2 & patch == 1)
-
-p2 <- plot_diagnostics_by_age(melted_array_v, "new infections", "Vaccinated")
- 
- 
-## by patches and vaccine status
-sum_over_ages <- sum_across_array_dims(n_infections, c(1, 3, 4))
-
-Nt_sum_over_ages <- sum_across_array_dims(Ntotal, c(1, 3, 4))
-
-prop_sum_over_ages <- ifelse(Nt_sum_over_ages == 0, 0, sum_over_ages / Nt_sum_over_ages)
-
-melted_sum_a <- melt_sim_output_array_2(prop_sum_over_ages, tt)
-
-p3 <- plot_diagnostics_by_p_v(melted_sum_a, "vaccine", "new infections (prop)")
-
-melted_sum_a_b <- melt_sim_output_array_2(sum_over_ages, tt)
-  
-p3_b <- plot_diagnostics_by_p_v(melted_sum_a_b, "vaccine", "new infections")
-
+## by patch
+p_05 <- plot_by_facet(melt_sum_av_infections, "patch", "infections")
+p_06 <- plot_by_facet(melt_sum_av_w_infections, "patch", "weekly infections/1000")
+p_07 <- plot_by_facet(melt_sum_av_MC, "patch", "micro cases")
+p_08 <- plot_by_facet(melt_sum_av_w_MC, "patch", "weekly micro cases/1000")
 
 ## by vaccine status
-sum_over_ages_patches <- sum_across_array_dims(n_infections, c(1, 3))
-
-Nt_sum_over_ages_patches <- sum_across_array_dims(Ntotal, c(1, 3))
-
-prop_sum_over_ages_patches <- ifelse(Nt_sum_over_ages_patches == 0, 0, 
-                                     sum_over_ages_patches / Nt_sum_over_ages_patches)
-
-melted_sum_a_p <- melt_sim_output_array_3(prop_sum_over_ages_patches, tt, "vaccine")
-
-p4 <- plot_diagnostics_by_vaccine(melted_sum_a_p, "vaccine", "new infections") 
-
+p_09 <- plot_by_line(melt_sum_ap_infections, "vaccine", "infections", pl_ttl) 
+p_10 <- plot_by_line(melt_sum_ap_w_infections, "vaccine", "weekly infections/1000", pl_ttl)
+p_11 <- plot_by_line(melt_sum_ap_MC, "vaccine", "micro cases", pl_ttl)
+p_12 <- plot_by_line(melt_sum_ap_w_MC, "vaccine", "weekly micro cases/1000", pl_ttl)
 
 ## total
-sum_over_ages_patches_vaccine_inf_1 <- sum_across_array_dims(n_infections, 1)
-
-inf_1_df <- cbind_time(sum_over_ages_patches_vaccine_inf_1, tt)
-
-p5 <- plot_diagnostics(inf_1_df, "new nfections", ttl = gsub("_+", " ", trial_name))
-
-
-# plot MC ---------------------------------------------------------------------
+p_13 <- simple_plot(melt_sum_apv_infections, "infections", pl_ttl)
+p_14 <- simple_plot(melt_sum_apv_w_infections, "weekly infections/1000", pl_ttl)
+p_15 <- simple_plot(melt_sum_apv_MC, "micro cases", pl_ttl)
+p_16 <- simple_plot(melt_sum_apv_w_MC, "weekly micro cases/1000", pl_ttl)
 
 
-## by age, patches and vaccine status
-melted_array_full_MC <- melt_sim_output_array(MC, tt)
-
-melted_array_MC_nv <- subset(melted_array_full_MC, vaccine == 1 & patch == 1)
-
-p6 <- plot_diagnostics_by_age(melted_array_MC_nv, "microcephaly cases", "Non vaccinated")
-
-melted_array_MC_v <- subset(melted_array_full_MC, vaccine == 2 & patch == 1)
-
-p7 <- plot_diagnostics_by_age(melted_array_MC_v, "microcephaly cases", "Vaccinated")
+# saving plots ----------------------------------------------------------------
 
 
-## total
-sum_over_ages_patches_vaccine_MC <- sum_across_array_dims(MC, 1)
+save_plot(p_01, out_fig_dir, out_fl_nms[1], wdt = 12, hgt = 14)
+save_plot(p_02, out_fig_dir, out_fl_nms[2], wdt = 12, hgt = 14)
+save_plot(p_03, out_fig_dir, out_fl_nms[3], wdt = 12, hgt = 14)
+save_plot(p_04, out_fig_dir, out_fl_nms[4], wdt = 12, hgt = 14)
 
-MC_df <- cbind_time(sum_over_ages_patches_vaccine_MC, tt)
-  
-p8 <- plot_diagnostics(MC_df, "microcephaly cases", ttl = gsub("_+", " ", trial_name))
+save_plot(p_05, out_fig_dir, out_fl_nms[5], wdt = 17, hgt = 17)
+save_plot(p_06, out_fig_dir, out_fl_nms[6], wdt = 17, hgt = 17)
+save_plot(p_07, out_fig_dir, out_fl_nms[7], wdt = 17, hgt = 17)
+save_plot(p_08, out_fig_dir, out_fl_nms[8], wdt = 17, hgt = 17)
 
+save_plot(p_09, out_fig_dir, out_fl_nms[9], wdt = 12, hgt = 8)
+save_plot(p_10, out_fig_dir, out_fl_nms[10], wdt = 12, hgt = 8)
+save_plot(p_11, out_fig_dir, out_fl_nms[11], wdt = 12, hgt = 8)
+save_plot(p_12, out_fig_dir, out_fl_nms[12], wdt = 12, hgt = 8)
 
-# save plots ------------------------------------------------------------------
-
-
-tag <- "inf_1"
-
-save_plot(p1, out_fig_dir, sprintf("%s_vaccine_%s_patch_%s", tag, 1, 1), wdt = 12, hgt = 8)
-save_plot(p2, out_fig_dir, sprintf("%s_vaccine_%s_patch_%s", tag, 2, 1), wdt = 12, hgt = 8)
-save_plot(p3, out_fig_dir, paste0(tag, "_by_patch_vaccine_prop"), wdt = 17, hgt = 17)
-save_plot(p3_b, out_fig_dir, paste0(tag, "_by_patch_vaccine_n"), wdt = 17, hgt = 17)
-save_plot(p4, out_fig_dir, paste0(tag, "_by_vaccine"), wdt = 12, hgt = 8)
-save_plot(p5, out_fig_dir, paste0(tag, "_total"), wdt = 12, hgt = 8)
-
-tag_2 <- "microcephaly_cases"
-
-save_plot(p6, out_fig_dir, sprintf("%s_vaccine_%s_patch_%s", tag_2, 1, 1), wdt = 12, hgt = 8)
-save_plot(p7, out_fig_dir, sprintf("%s_vaccine_%s_patch_%s", tag_2, 2, 1), wdt = 12, hgt = 8)
-save_plot(p8, out_fig_dir, sprintf("%s_tot", tag_2), wdt = 12, hgt = 8)
+save_plot(p_13, out_fig_dir, out_fl_nms[13], wdt = 12, hgt = 8)
+save_plot(p_14, out_fig_dir, out_fl_nms[14], wdt = 12, hgt = 8)
+save_plot(p_15, out_fig_dir, out_fl_nms[15], wdt = 12, hgt = 8)
+save_plot(p_16, out_fig_dir, out_fl_nms[16], wdt = 12, hgt = 8)

@@ -34,6 +34,57 @@ simple_plot <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
   
 }
 
+plot_by_line <- function(df, line_var, y_lab_title, ttl = NULL) {
+  
+  plot_interval <- 5 # years
+  
+  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
+  
+  p <- ggplot(df) +
+    geom_line(aes_string(x = "time", y = "value", colour = line_var)) +
+    scale_y_continuous(name = y_lab_title) +
+    scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
+    theme_bw() +
+    theme(axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          strip.text.x = element_text(size = 8))
+  
+  if(!is.null(ttl)) {
+    
+    p <- p + ggtitle(ttl)
+    
+  }
+  
+  p
+  
+}
+
+plot_by_facet <- function(df, facet_var, y_lab_title, ttl = NULL) {
+  
+  plot_interval <- 5 # years
+  
+  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
+  
+  p <- ggplot(df) +
+    geom_line(aes(x = time, y = value), colour = "#63B8FF") +
+    facet_wrap(as.formula(paste("~", facet_var)), ncol = 4) +
+    scale_y_continuous(name = y_lab_title) +
+    scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
+    theme_bw() +
+    theme(axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          strip.text.x = element_text(size = 8))
+  
+  if(!is.null(ttl)) {
+    
+    p <- p + ggtitle(ttl)
+    
+  }
+  
+  p
+  
+}
+
 plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL, y_lim = NULL) {
   
   plot_interval <- 5 # years
@@ -43,69 +94,18 @@ plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL,
   if(is.null(y_lim)) {
     
     my_y_lim <- c(y_lim[1], y_lim[2])  
-  
+    
   } else {
     
     my_y_lim <- NULL
-  
-  }
     
+  }
+  
   p <- ggplot(df) +
     geom_line(aes_string(x = "time", y = "value", colour = line_var)) +
     facet_wrap(as.formula(paste("~", facet_var)), ncol = 1) +
     scale_fill_viridis() +
     scale_y_continuous(name = y_lab_title, limits = my_y_lim) +
-    scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-    theme_bw() +
-    theme(axis.text.x = element_text(size = 8),
-          axis.text.y = element_text(size = 8),
-          strip.text.x = element_text(size = 8))
-  
-  if(!is.null(ttl)) {
-    
-    p <- p + ggtitle(ttl)
-    
-  }
-  
-  p
-  
-}
-
-plot_diagnostics_by_patch <- function(df, y_lab_title, ttl = NULL) {
-  
-  plot_interval <- 5 # years
-  
-  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
-  
-  p <- ggplot(df) +
-    geom_line(aes(x = time, y = value), colour = "#63B8FF") +
-    facet_wrap(~ patch, ncol = 4) +
-    scale_y_continuous(name = y_lab_title) +
-    scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-    theme_bw() +
-    theme(axis.text.x = element_text(size = 8),
-          axis.text.y = element_text(size = 8),
-          strip.text.x = element_text(size = 8))
-  
-  if(!is.null(ttl)) {
-    
-    p <- p + ggtitle(ttl)
-    
-  }
-  
-  p
-  
-}
-
-plot_diagnostics_by_vaccine <- function(df, v_var, y_lab_title, ttl = NULL) {
-  
-  plot_interval <- 5 # years
-  
-  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
-  
-  p <- ggplot(df) +
-    geom_line(aes_string(x = "time", y = "value", colour = v_var)) +
-    scale_y_continuous(name = y_lab_title) +
     scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
     theme_bw() +
     theme(axis.text.x = element_text(size = 8),

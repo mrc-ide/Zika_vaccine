@@ -78,10 +78,9 @@ write_out_csv <- function(dat, my_path, file_name) {
   
   file_name_2 <- paste0(file_name, ".csv")
   
-  write.table(
+  write.csv(
     dat,
     file.path(my_path, file_name_2),
-    row.names = FALSE,
-    sep = ",")
+    row.names = FALSE)
   
 }

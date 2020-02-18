@@ -25,14 +25,6 @@ mean_across_patches <- function(x) {
   
 }
 
-# mean_across_patches <- function(out, var) {
-#   
-#   ret1 <- apply(out[[var]][,1:20], 1, mean)
-#   
-#   data.frame(x = out$TIME, y = ret1)
-#   
-# }
-
 summarize_in_window <- function(melted_array, from_t, to_t) {
   
   NP <- 21
@@ -104,3 +96,11 @@ calculate_incidence <- function(cum_infections, Ntotal, time_window) {
   ifelse(Ntotal == 0, 0, out / Ntotal * 1000)
   
 }
+
+# mean_across_patches <- function(out, var) {
+#   
+#   ret1 <- apply(out[[var]][,1:20], 1, mean)
+#   
+#   data.frame(x = out$TIME, y = ret1)
+#   
+# }

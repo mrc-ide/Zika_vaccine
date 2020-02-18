@@ -32,24 +32,6 @@ melt_sim_output_array <- function(array_to_melt, TIME) {
   
 }
 
-melt_sim_output_array_2 <- function(array_to_melt, TIME) {
-  
-  full_melt <- reshape2::melt(array_to_melt)
-  names(full_melt) <- c("time", "vaccine", "patch", "value")
-  no_vaccine <- length(unique(full_melt$vaccine))
-  no_patch <- length(unique(full_melt$patch))
-  combs <- no_vaccine * no_patch
-  tt_long <- rep(TIME, combs)
-  full_melt$time <- tt_long
-  
-  full_melt$vaccine <- factor(full_melt$vaccine,
-                          levels = unique(full_melt$vaccine),
-                          labels = unique(full_melt$vaccine))
-  
-  full_melt
-  
-}
-
 melt_sim_output_array_3 <- function(array_to_melt, TIME, var_name) {
   
   no_levels <- ncol(array_to_melt)
@@ -66,6 +48,24 @@ melt_sim_output_array_3 <- function(array_to_melt, TIME, var_name) {
   
 }
 
+# melt_sim_output_array_2 <- function(array_to_melt, TIME) {
+#   
+#   full_melt <- reshape2::melt(array_to_melt)
+#   names(full_melt) <- c("time", "vaccine", "patch", "value")
+#   no_vaccine <- length(unique(full_melt$vaccine))
+#   no_patch <- length(unique(full_melt$patch))
+#   combs <- no_vaccine * no_patch
+#   tt_long <- rep(TIME, combs)
+#   full_melt$time <- tt_long
+#   
+#   full_melt$vaccine <- factor(full_melt$vaccine,
+#                           levels = unique(full_melt$vaccine),
+#                           labels = unique(full_melt$vaccine))
+#   
+#   full_melt
+#   
+# }
+# 
 # melt_by_patch <- function(array_to_melt, TIME) {
 #   
 #   NP <- 21

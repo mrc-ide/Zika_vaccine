@@ -1,9 +1,11 @@
 
 simple_plot <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
   
+  max_time <- length(unique(df$time))
+  
   plot_interval <- 5 # years
   
-  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
+  brks <- seq(from = 0, to = max_time, by = 364 * plot_interval)
   
   if(is.null(y_lim)) {
     
@@ -17,7 +19,7 @@ simple_plot <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
   
   p <- ggplot(df) +
     geom_line(aes(x = time, y = value), colour = "#63B8FF") +
-    scale_y_continuous(name = y_lab_title, limits = my_y_lim) +
+    scale_y_continuous(name = y_lab_title, limits = my_y_lim, labels = scales::comma) +
     scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
     theme_bw() +
     theme(axis.text.x = element_text(size = 8),
@@ -36,13 +38,15 @@ simple_plot <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
 
 plot_by_line <- function(df, line_var, y_lab_title, ttl = NULL) {
   
+  max_time <- length(unique(df$time))
+  
   plot_interval <- 5 # years
   
-  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
+  brks <- seq(from = 0, to = max_time, by = 364 * plot_interval)
   
   p <- ggplot(df) +
     geom_line(aes_string(x = "time", y = "value", colour = line_var)) +
-    scale_y_continuous(name = y_lab_title) +
+    scale_y_continuous(name = y_lab_title, labels = scales::comma) +
     scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
     theme_bw() +
     theme(axis.text.x = element_text(size = 8),
@@ -61,14 +65,16 @@ plot_by_line <- function(df, line_var, y_lab_title, ttl = NULL) {
 
 plot_by_facet <- function(df, facet_var, y_lab_title, ttl = NULL) {
   
+  max_time <- length(unique(df$time))
+  
   plot_interval <- 5 # years
   
-  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
+  brks <- seq(from = 0, to = max_time, by = 364 * plot_interval)
   
   p <- ggplot(df) +
     geom_line(aes(x = time, y = value), colour = "#63B8FF") +
     facet_wrap(as.formula(paste("~", facet_var)), ncol = 4) +
-    scale_y_continuous(name = y_lab_title) +
+    scale_y_continuous(name = y_lab_title, labels = scales::comma) +
     scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
     theme_bw() +
     theme(axis.text.x = element_text(size = 8),
@@ -87,9 +93,11 @@ plot_by_facet <- function(df, facet_var, y_lab_title, ttl = NULL) {
 
 plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL, y_lim = NULL) {
   
+  max_time <- length(unique(df$time))
+  
   plot_interval <- 5 # years
   
-  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
+  brks <- seq(from = 0, to = max_time, by = 364 * plot_interval)
   
   if(is.null(y_lim)) {
     

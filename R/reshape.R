@@ -135,6 +135,15 @@ cumsum_and_incidence_age <- function(my_array, Ntotal) {
   
 }
 
+calculate_SIR_proportions <- function(prevalence, Ntotal, tt) {
+  
+  value <- prevalence / Ntotal
+  
+  cbind_time(value, tt)
+  
+}
+  
+  
 # melt_sim_output_array_2 <- function(array_to_melt, TIME) {
 #   
 #   full_melt <- reshape2::melt(array_to_melt)

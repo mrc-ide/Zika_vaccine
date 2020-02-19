@@ -110,7 +110,9 @@ plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL,
   
   p <- ggplot(df) +
     geom_line(aes_string(x = "time", y = "value", colour = line_var)) +
-    facet_wrap(as.formula(paste("~", facet_var)), ncol = 1) +
+    facet_wrap(facets = as.formula(paste("~", facet_var)), 
+               ncol = 1, 
+               scales = "free_y") +
     scale_fill_viridis() +
     scale_y_continuous(name = y_lab_title, limits = my_y_lim, labels = scales::comma) +
     scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
@@ -118,7 +120,8 @@ plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL,
     theme(axis.text.x = element_text(size = 8),
           axis.text.y = element_text(size = 8),
           strip.text.x = element_text(size = 8),
-          legend.position = "bottom")
+          legend.position = "bottom") + 
+    guides(colour = guide_legend(nrow = 1))
   
   if(!is.null(ttl)) {
     

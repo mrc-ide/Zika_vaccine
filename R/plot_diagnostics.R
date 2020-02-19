@@ -36,7 +36,7 @@ simple_plot <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
   
 }
 
-plot_by_line <- function(df, line_var, y_lab_title, ttl = NULL) {
+plot_by_line <- function(df, line_var, y_lab_title, ttl = NULL, leg_pos = NULL) {
   
   max_time <- length(unique(df$time))
   
@@ -51,7 +51,8 @@ plot_by_line <- function(df, line_var, y_lab_title, ttl = NULL) {
     theme_bw() +
     theme(axis.text.x = element_text(size = 8),
           axis.text.y = element_text(size = 8),
-          strip.text.x = element_text(size = 8))
+          strip.text.x = element_text(size = 8),
+          legend.position = "bottom")
   
   if(!is.null(ttl)) {
     
@@ -59,6 +60,12 @@ plot_by_line <- function(df, line_var, y_lab_title, ttl = NULL) {
     
   }
   
+  if(!is.null(leg_pos)){
+    
+    p <- p + theme(legend.position = leg_pos)
+    
+  }
+    
   p
   
 }
@@ -91,7 +98,7 @@ plot_by_facet <- function(df, facet_var, y_lab_title, ttl = NULL) {
   
 }
 
-plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL, y_lim = NULL) {
+plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL, y_lim = NULL, leg_pos = NULL) {
   
   max_time <- length(unique(df$time))
   
@@ -113,16 +120,23 @@ plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL,
     geom_line(aes_string(x = "time", y = "value", colour = line_var)) +
     facet_wrap(as.formula(paste("~", facet_var)), ncol = 1) +
     scale_fill_viridis() +
-    scale_y_continuous(name = y_lab_title, limits = my_y_lim) +
+    scale_y_continuous(name = y_lab_title, limits = my_y_lim, labels = scales::comma) +
     scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
     theme_bw() +
     theme(axis.text.x = element_text(size = 8),
           axis.text.y = element_text(size = 8),
-          strip.text.x = element_text(size = 8))
+          strip.text.x = element_text(size = 8),
+          legend.position = "bottom")
   
   if(!is.null(ttl)) {
     
     p <- p + ggtitle(ttl)
+    
+  }
+  
+  if(!is.null(leg_pos)){
+    
+    p <- p + theme(legend.position = leg_pos)
     
   }
   
@@ -154,6 +168,18 @@ plot_diagnostics_by_p_v <- function(df, v_var, y_lab_title, ttl = NULL) {
   }
   
   p
+  
+}
+
+g_legend <- function(a.gplot){
+  
+  tmp <- ggplot_gtable(ggplot_build(a.gplot))
+  
+  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
+  
+  legend <- tmp$grobs[[leg]]
+  
+  return(legend)
   
 }
 

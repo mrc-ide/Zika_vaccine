@@ -1,11 +1,9 @@
 
-simple_plot <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
+simple_plot <- function(df, y_lab_title, ttl = NULL, y_lim = NULL, break_interval = 5) {
   
   max_time <- length(unique(df$time))
   
-  plot_interval <- 5 # years
-  
-  brks <- seq(from = 0, to = max_time, by = 364 * plot_interval)
+  brks <- seq(from = 0, to = max_time, by = 364 * break_interval)
   
   if(is.null(y_lim)) {
     
@@ -36,13 +34,11 @@ simple_plot <- function(df, y_lab_title, ttl = NULL, y_lim = NULL) {
   
 }
 
-plot_by_line <- function(df, line_var, y_lab_title, ttl = NULL, leg_pos = NULL) {
+plot_by_line <- function(df, line_var, y_lab_title, ttl = NULL, leg_pos = NULL, break_interval = 5) {
   
   max_time <- length(unique(df$time))
   
-  plot_interval <- 5 # years
-  
-  brks <- seq(from = 0, to = max_time, by = 364 * plot_interval)
+  brks <- seq(from = 0, to = max_time, by = 364 * break_interval)
   
   p <- ggplot(df) +
     geom_line(aes_string(x = "time", y = "value", colour = line_var)) +
@@ -70,13 +66,11 @@ plot_by_line <- function(df, line_var, y_lab_title, ttl = NULL, leg_pos = NULL) 
   
 }
 
-plot_by_facet <- function(df, facet_var, y_lab_title, ttl = NULL) {
+plot_by_facet <- function(df, facet_var, y_lab_title, ttl = NULL, break_interval = 5) {
   
   max_time <- length(unique(df$time))
   
-  plot_interval <- 5 # years
-  
-  brks <- seq(from = 0, to = max_time, by = 364 * plot_interval)
+  brks <- seq(from = 0, to = max_time, by = 364 * break_interval)
   
   p <- ggplot(df) +
     geom_line(aes(x = time, y = value), colour = "#63B8FF") +
@@ -98,13 +92,11 @@ plot_by_facet <- function(df, facet_var, y_lab_title, ttl = NULL) {
   
 }
 
-plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL, y_lim = NULL, leg_pos = NULL) {
+plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL, y_lim = NULL, leg_pos = NULL, break_interval = 5) {
   
   max_time <- length(unique(df$time))
   
-  plot_interval <- 5 # years
-  
-  brks <- seq(from = 0, to = max_time, by = 364 * plot_interval)
+  brks <- seq(from = 0, to = max_time, by = 364 * break_interval)
   
   if(is.null(y_lim)) {
     
@@ -144,11 +136,9 @@ plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL,
   
 }
 
-plot_diagnostics_by_p_v <- function(df, v_var, y_lab_title, ttl = NULL) {
+plot_diagnostics_by_p_v <- function(df, v_var, y_lab_title, ttl = NULL, break_interval = 5) {
   
-  plot_interval <- 5 # years
-  
-  brks <- seq(from = 0, to = time, by = 364 * plot_interval)
+  brks <- seq(from = 0, to = time, by = 364 * break_interval)
   
   p <- ggplot(df) +
     geom_line(aes_string(x = "time", y = "value", colour = v_var)) +

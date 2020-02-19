@@ -154,11 +154,6 @@ sum_av_Ntotal <- sum_across_array_dims(Ntotal, c(1, 4))
 sum_ap_Ntotal <- sum_across_array_dims(Ntotal, c(1, 3))
 sum_apv_Ntotal <- sum_across_array_dims(Ntotal, 1)
 
-sum_av_S <- sum_across_array_dims(susceptibles, c(1, 4))
-sum_ap_S <- sum_across_array_dims(susceptibles, c(1, 3))
-sum_apv_S <- sum_across_array_dims(susceptibles, 1)
-
-
 ## cumulative sums (time)
 cumsum_infections <- cumsum_across_array_dims(infections, c(2, 3, 4))
 cumsum_sum_av_infections <- cumsum_across_array_dims(sum_av_infections, 2)

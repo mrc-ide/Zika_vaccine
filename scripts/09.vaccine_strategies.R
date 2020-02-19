@@ -44,10 +44,10 @@ plot_interval <- 5 # years
 
 vacc_coverage_values <- c(0, 0.5, 0.8, 1)
 
-vacc_starttime <- 0  
+vacc_starttime <- 1.7  
 
-# 2 months campaign
-vacc_stoptime <- vacc_starttime + 50 
+# ~2 months campaign
+vacc_stoptime <- vacc_starttime + 0.16 
 
 # from 9 to 49
 vacc_ages <- c(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0) 
@@ -58,7 +58,7 @@ trial_name <- paste0("experiment_", my_id)
 
 pl_ttl <- gsub("_+", " ", trial_name)
 
-vacc_ages_labels_full <- c("1", "2_10", "11_20", "21_30", "31_40", "41_50", "51_60", "61_70", "71_80", "81_90", "91_100") 
+ages_labels <- c("1", "2_10", "11_20", "21_30", "31_40", "41_50", "51_60", "61_70", "71_80", "81_90", "91_100") 
 
 
 # pre processing --------------------------------------------------------------
@@ -142,7 +142,7 @@ time <- length(tt)
 
 ## totals 
 
-plot_total <- c("S", "I1", "R1", "inf_1", "births", "Ntotal", "MC")
+plot_total <- c("S", "I1", "R1", "Ntotal", "births", "inf_1", "MC")
 
 plot_total_inc <- c("inf_1", "MC")
 
@@ -156,17 +156,31 @@ names(ls_total_2) <- plot_total_inc_lab
 
 to_plot_total_1 <- lapply(ls_total_1, aggregate_and_reshape_total, tt) 
 
+pS <- calculate_SIR_proportions(to_plot_total_1$S$value, to_plot_total_1$Ntotal$value, tt)
+pI1 <- calculate_SIR_proportions(to_plot_total_1$I1$value, to_plot_total_1$Ntotal$value, tt)
+pR1 <- calculate_SIR_proportions(to_plot_total_1$R1$value, to_plot_total_1$Ntotal$value, tt)
+
+to_plot_total_1$pS <- pS
+to_plot_total_1$pI1 <- pI1
+to_plot_total_1$pR1 <- pR1
+
+plot_total <- c("S", "I1", "R1", "Ntotal", "pS", "pI1", "pR1", "births", "inf_1", "MC")
+
+to_plot_total_1a <- to_plot_total_1[plot_total]
+
 to_plot_total_2 <- lapply(ls_total_2, cumsum_and_incidence_total, Ntotal)
 
-to_plot_total <- c(to_plot_total_1, to_plot_total_2)
+to_plot_total <- c(to_plot_total_1a, to_plot_total_2)
 
-y_labels <- c("number", "number", "number", "number", "number", "number", "number",
+y_labels <- c("number", "number", "number", "number", "proportion", "proportion", 
+              "proportion", "number", "number", "number",
               "weekly number/1000", "weekly number/1000")
 
 y_labels <- setNames(y_labels, c(plot_total, plot_total_inc_lab)) 
 
-titles <- c("Susceptibles", "Infected", "Recovered", "New infections", 
-            "Births", "Total", "Microcephaly", 
+titles <- c("Susceptibles", "Infected", "Recovered", "Total",
+            "Susceptibles", "Infected", "Recovered",
+            "Births", "New infections", "Microcephaly", 
             "Weekly new infections", "Weekly new microcephaly")
 
 titles <- setNames(titles, c(plot_total, plot_total_inc_lab))
@@ -178,7 +192,7 @@ all_plots_total <- imap(to_plot_total,
 
 all_plots_total_01 <- arrangeGrob(grobs = all_plots_total[1:4], nrow = 2, ncol = 2)
 all_plots_total_02 <- arrangeGrob(grobs = all_plots_total[5:8], nrow = 2, ncol = 2)
-all_plots_total_03 <- arrangeGrob(grobs = all_plots_total[9], nrow = 2, ncol = 2)
+all_plots_total_03 <- arrangeGrob(grobs = all_plots_total[9:12], nrow = 2, ncol = 2)
 
 save_plot(all_plots_total_01, out_fig_dir, paste0(plot_type[1], "_1"), wdt = 17, hgt = 12)
 save_plot(all_plots_total_02, out_fig_dir, paste0(plot_type[1], "_2"), wdt = 17, hgt = 12)
@@ -190,7 +204,7 @@ save_plot(all_plots_total_03, out_fig_dir, paste0(plot_type[1], "_3"), wdt = 17,
 
 ## by patch  
 
-plot_patch <- c("S", "I1", "R1", "inf_1", "Ntotal", "MC")
+plot_patch <- c("S", "I1", "R1", "Ntotal", "inf_1", "MC")
 
 plot_patch_vector <- "births"
 
@@ -219,8 +233,8 @@ y_labels <- c("number", "number", "number", "number", "number", "number", "numbe
 
 y_labels <- setNames(y_labels, c(plot_patch, plot_patch_vector, plot_patch_inc_lab)) 
 
-titles <- c("Susceptibles", "Infected", "Recovered", "New infections", 
-            "Total", "Microcephaly", "Births", 
+titles <- c("Susceptibles", "Infected", "Recovered", "Total",
+            "New infections", "Microcephaly", "Births", 
             "Weekly new infections", "Weekly new microcephaly")
 
 titles <- setNames(titles, c(plot_patch, plot_patch_vector, plot_patch_inc_lab))
@@ -244,7 +258,7 @@ imap(all_plots_patch,
 
 ## by vaccine status
 
-plot_vaccine <- c("S", "I1", "R1", "inf_1", "Ntotal", "MC")
+plot_vaccine <- c("S", "I1", "R1", "Ntotal", "inf_1", "MC")
 
 plot_vaccine_inc <- c("inf_1", "MC")
 
@@ -267,8 +281,8 @@ y_labels <- c("number", "number", "number", "number", "number", "number",
 
 y_labels <- setNames(y_labels, c(plot_vaccine, plot_vaccine_inc_lab)) 
 
-titles <- c("Susceptibles", "Infected", "Recovered", "New infections", 
-            "Total", "Microcephaly",
+titles <- c("Susceptibles", "Infected", "Recovered", "Total",
+            "New infections", "Microcephaly",
             "Weekly new infections", "Weekly new microcephaly")
 
 titles <- setNames(titles, c(plot_vaccine, plot_vaccine_inc_lab))
@@ -310,7 +324,7 @@ save_plot(all_plots_vaccine_02_leg, out_fig_dir, paste0(plot_type[3], "_2"), wdt
 
 ## by patch and vaccine status (for one patch)
 
-plot_age <- c("S", "I1", "R1", "inf_1", "Ntotal", "MC")
+plot_age <- c("S", "I1", "R1", "Ntotal", "inf_1", "MC")
 
 plot_age_inc <- c("inf_1", "MC")
 
@@ -333,8 +347,8 @@ y_labels <- c("number", "number", "number", "number", "number", "number",
 
 y_labels <- setNames(y_labels, c(plot_age, plot_age_inc_lab)) 
 
-titles <- c("Susceptibles", "Infected", "Recovered", "New infections", 
-            "Total", "Microcephaly", 
+titles <- c("Susceptibles", "Infected", "Recovered", "Total",
+            "New infections", "Microcephaly", 
             "Weekly new infections", "Weekly new microcephaly")
 
 titles <- setNames(titles, c(plot_age, plot_age_inc_lab))
@@ -389,6 +403,7 @@ save_plot(all_plots_age_04_leg, out_fig_dir, paste0(plot_type[4], "_4"), wdt = 1
 
 # create summary table by age -------------------------------------------------
 
+
 vacc_age_ids <- which(vacc_ages == 1)
 infections_sub <- infections[1:time, vacc_age_ids, 1:2, 1:21]
 MC_sub <- MC[1:time, vacc_age_ids, 1:2, 1:21]
@@ -396,7 +411,7 @@ Ntotal_sub <- Ntotal[1:time, vacc_age_ids, 1:2, 1:21]
 sum_apv_infections_sub <- sum_across_array_dims(infections_sub, 2)
 sum_apv_MC_sub <- sum_across_array_dims(MC_sub, 2)
 sum_apv_Ntotal_sub <- sum_across_array_dims(Ntotal_sub, 2)
-vacc_ages_labels <- vacc_ages_labels_full[vacc_age_ids]
+vacc_ages_labels <- ages_labels[vacc_age_ids]
 summary_vacc_ages <- data.frame(age_groups = vacc_ages_labels,
                                infections = sum_apv_infections_sub,
                                 micro_cases = sum_apv_MC_sub,

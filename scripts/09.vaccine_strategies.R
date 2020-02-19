@@ -17,7 +17,7 @@ source(file.path("R", "plot_diagnostics.R"))
 # define parameters -----------------------------------------------------------
 
 
-my_cov_value <- 0.25
+my_id <- 4
   
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -41,23 +41,23 @@ mr_baseline <- 0.0002
 
 plot_interval <- 5 # years
 
-vacc_child_coverage_values <- c(0.5, 0.8)
-
-population_coverage_values <- c(0.5, 1)
+vacc_coverage_values <- c(0, 0.5, 0.8, 1)
   
-vacc_starttime <- 1.5  
+vacc_starttime <- 0  
 
 # 2 months campaign
-vacc_stoptime <- vacc_starttime + 0.2 
+vacc_stoptime <- vacc_starttime + 50 
 
 # from 9 to 49
-vacc_ages <- c(0, 1, 1, 1, 1, 0, 0, 0, 0, 0, 0) 
+vacc_ages <- c(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0) 
 
 odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
 
-trial_name <- paste0("coverage_", my_cov_value * 100)
+trial_name <- paste0("experiment_", my_id)
 
 pl_ttl <- gsub("_+", " ", trial_name)
+
+vacc_ages_labels <- c("1", "2_10", "11_20", "21_30", "31_40", "41_50", "51_60", "61_70", "71_80", "81_90", "91_100") 
 
 
 # pre processing --------------------------------------------------------------
@@ -77,11 +77,14 @@ all_combs <- expand.grid(tags, plot_type)
 
 out_fl_nms <- paste(all_combs$Var1, all_combs$Var2, sep = "_")
 
-vacc_pop_cov_combs <- as.vector(outer(vacc_child_coverage_values, population_coverage_values))
+exp_des <- data.frame(id = seq_len(length(vacc_coverage_values)), 
+                      vacc_cov = vacc_coverage_values)
 
-tot_cov_values <- c(0, vacc_pop_cov_combs, 1)
+write_out_csv(exp_des, file.path("output", "vaccine_strategies"), "experimental_design") 
 
-vacc_child_cov <- tot_cov_values[tot_cov_values == my_cov_value]
+exp_des_one <- exp_des[exp_des$id == my_id,]
+
+vacc_child_cov <- exp_des_one[, "vacc_cov"]
 
 integer_time_steps <- (364 * time_years) / my_dt
 
@@ -126,17 +129,17 @@ infections <- out$inf_1
 
 Ntotal <- out$Ntotal
 
-time_steps <- out$TIME
-
-tt <- out$TIME
-
-time <- max(tt)
-
 MC <- calculate_microcases(N_inf = infections, 
                            pregnancy_risk_curve = mr_pregn_data, 
                            birth_rates = br_brazil_age, 
                            N_tot = Ntotal, 
                            baseline_probM = mr_baseline)
+
+out$MC <- MC
+
+tt <- out$TIME
+
+time <- length(tt)
 
 ## aggregate (age, vaccine status, patch)
 sum_av_infections <- sum_across_array_dims(infections, c(1, 4))
@@ -150,6 +153,11 @@ sum_apv_MC <- sum_across_array_dims(MC, 1)
 sum_av_Ntotal <- sum_across_array_dims(Ntotal, c(1, 4))
 sum_ap_Ntotal <- sum_across_array_dims(Ntotal, c(1, 3))
 sum_apv_Ntotal <- sum_across_array_dims(Ntotal, 1)
+
+sum_av_S <- sum_across_array_dims(susceptibles, c(1, 4))
+sum_ap_S <- sum_across_array_dims(susceptibles, c(1, 3))
+sum_apv_S <- sum_across_array_dims(susceptibles, 1)
+
 
 ## cumulative sums (time)
 cumsum_infections <- cumsum_across_array_dims(infections, c(2, 3, 4))
@@ -251,3 +259,25 @@ save_plot(p_13, out_fig_dir, out_fl_nms[13], wdt = 12, hgt = 8)
 save_plot(p_14, out_fig_dir, out_fl_nms[14], wdt = 12, hgt = 8)
 save_plot(p_15, out_fig_dir, out_fl_nms[15], wdt = 12, hgt = 8)
 save_plot(p_16, out_fig_dir, out_fl_nms[16], wdt = 12, hgt = 8)
+
+
+# -----------------------------------------------------------------------------
+
+
+vacc_age_ids <- which(vacc_ages == 1)
+
+infections_sub <- infections[1:time, vacc_age_ids, 1:2, 1:21]
+MC_sub <- MC[1:time, vacc_age_ids, 1:2, 1:21]
+Ntotal_sub <- Ntotal[1:time, vacc_age_ids, 1:2, 1:21]
+
+sum_apv_infections_sub <- sum_across_array_dims(infections_sub, 2)
+sum_apv_MC_sub <- sum_across_array_dims(MC_sub, 2)
+sum_apv_Ntotal_sub <- sum_across_array_dims(Ntotal_sub, 2)
+
+summary_vacc_ages <- data.frame(age_groups = vacc_ages_labels,
+                                infections = sum_apv_infections_sub,
+                                micro_cases = sum_apv_MC_sub,
+                                population = sum_apv_Ntotal_sub, 
+                                stringsAsFactors = FALSE)
+
+write_out_csv(summary_vacc_ages, out_tab_dir, paste0("infections_vacc_age_", my_id))

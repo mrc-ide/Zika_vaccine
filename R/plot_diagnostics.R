@@ -164,18 +164,6 @@ plot_diagnostics_by_p_v <- function(df, v_var, y_lab_title, ttl = NULL, break_in
   
 }
 
-g_legend <- function(a.gplot){
-  
-  tmp <- ggplot_gtable(ggplot_build(a.gplot))
-  
-  leg <- which(sapply(tmp$grobs, function(x) x$name) == "guide-box")
-  
-  legend <- tmp$grobs[[leg]]
-  
-  return(legend)
-  
-}
-
 # plot_diagnostics_by_age <- function(df, out_pth, out_fl_nm, diagno_nms){
 # 
 #   # browser()

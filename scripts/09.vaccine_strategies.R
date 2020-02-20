@@ -13,12 +13,13 @@ source(file.path("R", "reshape.R"))
 source(file.path("R", "aggregate.R"))
 source(file.path("R", "post_process.R"))
 source(file.path("R", "plot_diagnostics.R"))
+source(file.path("R", "plot_layout.R"))
 
 
 # define parameters -----------------------------------------------------------
 
 
-my_id <- 4
+my_id <- 3
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -47,7 +48,7 @@ vacc_coverage_values <- c(0, 0.5, 0.8, 1)
 vacc_starttime <- 1.7  
 
 # ~2 months campaign
-vacc_stoptime <- vacc_starttime + 0.16 
+vacc_stoptime <- vacc_starttime + 100 # 0.16 
 
 # from 9 to 49
 vacc_ages <- c(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0) 
@@ -74,8 +75,6 @@ plot_type <- c("total", "by_patch", "by_vaccine", "by_age")
 
 exp_des <- data.frame(id = seq_len(length(vacc_coverage_values)), 
                       vacc_cov = vacc_coverage_values)
-
-write_out_csv(exp_des, file.path("output", "vaccine_strategies"), "experimental_design") 
 
 exp_des_one <- exp_des[exp_des$id == my_id,]
 
@@ -190,14 +189,8 @@ all_plots_total <- imap(to_plot_total,
                                       y_lab_title = y_labels[.y],
                                       ttl = titles[.y]))
 
-all_plots_total_01 <- arrangeGrob(grobs = all_plots_total[1:4], nrow = 2, ncol = 2)
-all_plots_total_02 <- arrangeGrob(grobs = all_plots_total[5:8], nrow = 2, ncol = 2)
-all_plots_total_03 <- arrangeGrob(grobs = all_plots_total[9:12], nrow = 2, ncol = 2)
-
-save_plot(all_plots_total_01, out_fig_dir, paste0(plot_type[1], "_1"), wdt = 17, hgt = 12)
-save_plot(all_plots_total_02, out_fig_dir, paste0(plot_type[1], "_2"), wdt = 17, hgt = 12)
-save_plot(all_plots_total_03, out_fig_dir, paste0(plot_type[1], "_3"), wdt = 17, hgt = 12)
-
+plots_total_combined <- arrangeGrob_multi_files(all_plots_total, n_plots_per_file = 4)
+  
 
 # -----------------------------------------------------------------------------
 
@@ -245,13 +238,6 @@ all_plots_patch <- imap(to_plot_patch,
                                         y_lab_title = y_labels[.y],
                                         ttl = titles[.y]))
 
-imap(all_plots_patch,
-     ~ save_plot(plot_obj = .x,
-                 out_pth = out_fig_dir, 
-                 out_fl_nm = paste(plot_type[2], .y, sep = "_"), 
-                 wdt = 17, 
-                 hgt = 17))
-
 
 # -----------------------------------------------------------------------------
 
@@ -287,36 +273,15 @@ titles <- c("Susceptibles", "Infected", "Recovered", "Total",
 
 titles <- setNames(titles, c(plot_vaccine, plot_vaccine_inc_lab))
 
-all_plots_vaccine_leg <- imap(to_plot_vaccine, 
+all_plots_vaccine <- imap(to_plot_vaccine, 
                           ~ plot_by_line(df = .x, 
                                          line_var = "vaccine",
                                          y_lab_title = y_labels[.y],
                                          ttl = titles[.y]))
 
-mylegend <- g_legend(all_plots_vaccine_leg[[1]])
-
-all_plots_vaccine <- imap(to_plot_vaccine, 
-                          ~ plot_by_line(df = .x, 
-                                         line_var = "vaccine",
-                                         y_lab_title = y_labels[.y],
-                                         ttl = titles[.y],
-                                         leg_pos = "none"))
-
-all_plots_vaccine_01 <- arrangeGrob(grobs = all_plots_vaccine[1:4], nrow = 2, ncol = 2)
-all_plots_vaccine_02 <- arrangeGrob(grobs = all_plots_vaccine[5:8], nrow = 2, ncol = 2)
-
-all_plots_vaccine_01_leg <- arrangeGrob(all_plots_vaccine_01, mylegend, 
-                                        nrow = 2, 
-                                        widths = 17, 
-                                        heights = c(11, 1))
-
-all_plots_vaccine_02_leg <- arrangeGrob(all_plots_vaccine_02, mylegend, 
-                                        nrow = 2, 
-                                        widths = 17, 
-                                        heights = c(11, 1))
-
-save_plot(all_plots_vaccine_01_leg, out_fig_dir, paste0(plot_type[3], "_1"), wdt = 17, hgt = 12)
-save_plot(all_plots_vaccine_02_leg, out_fig_dir, paste0(plot_type[3], "_2"), wdt = 17, hgt = 12)
+plots_vaccine_combined <- arrangeGrob_multi_files(all_plots_vaccine, 
+                                                  n_plots_per_file = 4, 
+                                                  legend = TRUE)
 
 
 # -----------------------------------------------------------------------------
@@ -353,52 +318,16 @@ titles <- c("Susceptibles", "Infected", "Recovered", "Total",
 
 titles <- setNames(titles, c(plot_age, plot_age_inc_lab))
 
-all_plots_age_leg <- imap(to_plot_age, 
-                          ~ plot_by_line_facet(df = .x, 
-                                               line_var = "age", 
-                                               facet_var = "vaccine",
-                                               y_lab_title = y_labels[.y],
-                                               ttl = titles[.y]))
-
-mylegend <- g_legend(all_plots_age_leg[[1]])
-
 all_plots_age <- imap(to_plot_age, 
                       ~ plot_by_line_facet(df = .x, 
                                            line_var = "age", 
                                            facet_var = "vaccine",
                                            y_lab_title = y_labels[.y],
-                                           ttl = titles[.y],
-                                           leg_pos = "none"))
+                                           ttl = titles[.y]))
 
-all_plots_age_01 <- arrangeGrob(grobs = all_plots_age[1:2], nrow = 1, ncol = 2)
-all_plots_age_02 <- arrangeGrob(grobs = all_plots_age[3:4], nrow = 1, ncol = 2)
-all_plots_age_03 <- arrangeGrob(grobs = all_plots_age[5:6], nrow = 1, ncol = 2)
-all_plots_age_04 <- arrangeGrob(grobs = all_plots_age[7:8], nrow = 1, ncol = 2)
-
-all_plots_age_01_leg <- arrangeGrob(all_plots_age_01, mylegend, 
-                                    nrow = 2, 
-                                    widths = 17, 
-                                    heights = c(11, 1))
-
-all_plots_age_02_leg <- arrangeGrob(all_plots_age_02, mylegend, 
-                                    nrow = 2, 
-                                    widths = 17, 
-                                    heights = c(11, 1))
-
-all_plots_age_03_leg <- arrangeGrob(all_plots_age_03, mylegend, 
-                                    nrow = 2, 
-                                    widths = 17, 
-                                    heights = c(11, 1))
-
-all_plots_age_04_leg <- arrangeGrob(all_plots_age_04, mylegend, 
-                                    nrow = 2, 
-                                    widths = 17, 
-                                    heights = c(11, 1))
-
-save_plot(all_plots_age_01_leg, out_fig_dir, paste0(plot_type[4], "_1"), wdt = 17, hgt = 12)
-save_plot(all_plots_age_02_leg, out_fig_dir, paste0(plot_type[4], "_2"), wdt = 17, hgt = 12)
-save_plot(all_plots_age_03_leg, out_fig_dir, paste0(plot_type[4], "_3"), wdt = 17, hgt = 12)
-save_plot(all_plots_age_04_leg, out_fig_dir, paste0(plot_type[4], "_4"), wdt = 17, hgt = 12)
+plots_age_combined <- arrangeGrob_multi_files(all_plots_age, 
+                                              n_plots_per_file = 2,
+                                              legend = TRUE)
 
 
 # create summary table by age -------------------------------------------------
@@ -413,5 +342,43 @@ summary_vacc_ages <- data.frame(age_groups = ages_labels,
                                 microcephaly = sum_apv_MC,
                                 population = sum_apv_Ntotal, 
                                 stringsAsFactors = FALSE)
+
+
+# save plots ------------------------------------------------------------------
+
+
+save_01 <- imap(plots_total_combined,
+                ~ save_plot(plot_obj = .x,
+                            out_pth = out_fig_dir, 
+                            out_fl_nm = paste(plot_type[1], .y, sep = "_"), 
+                            wdt = 17, 
+                            hgt = 12))
+
+save_02 <- imap(all_plots_patch,
+                ~ save_plot(plot_obj = .x,
+                            out_pth = out_fig_dir, 
+                            out_fl_nm = paste(plot_type[2], .y, sep = "_"), 
+                            wdt = 17, 
+                            hgt = 17))
+
+save_03 <- imap(plots_vaccine_combined,
+                ~ save_plot(plot_obj = .x,
+                            out_pth = out_fig_dir, 
+                            out_fl_nm = paste(plot_type[3], .y, sep = "_"), 
+                            wdt = 17, 
+                            hgt = 12))
+
+save_04 <- imap(plots_age_combined,
+                ~ save_plot(plot_obj = .x,
+                            out_pth = out_fig_dir, 
+                            out_fl_nm = paste(plot_type[4], .y, sep = "_"), 
+                            wdt = 17, 
+                            hgt = 12))
+
+
+# save tables -----------------------------------------------------------------
+
+
+write_out_csv(exp_des, file.path("output", "vaccine_strategies"), "experimental_design") 
 
 write_out_csv(summary_vacc_ages, out_tab_dir, paste0("burden_summary_age_", my_id))

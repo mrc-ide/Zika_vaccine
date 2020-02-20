@@ -58,7 +58,7 @@ trial_name <- paste0("experiment_", my_id)
 
 pl_ttl <- gsub("_+", " ", trial_name)
 
-ages_labels <- c("1", "2_10", "11_20", "21_30", "31_40", "41_50", "51_60", "61_70", "71_80", "81_90", "91_100") 
+ages_labels <- c("0_1", "2_10", "11_20", "21_30", "31_40", "41_50", "51_60", "61_70", "71_80", "81_90", "91_100") 
 
 
 # pre processing --------------------------------------------------------------
@@ -404,18 +404,14 @@ save_plot(all_plots_age_04_leg, out_fig_dir, paste0(plot_type[4], "_4"), wdt = 1
 # create summary table by age -------------------------------------------------
 
 
-vacc_age_ids <- which(vacc_ages == 1)
-infections_sub <- infections[1:time, vacc_age_ids, 1:2, 1:21]
-MC_sub <- MC[1:time, vacc_age_ids, 1:2, 1:21]
-Ntotal_sub <- Ntotal[1:time, vacc_age_ids, 1:2, 1:21]
-sum_apv_infections_sub <- sum_across_array_dims(infections_sub, 2)
-sum_apv_MC_sub <- sum_across_array_dims(MC_sub, 2)
-sum_apv_Ntotal_sub <- sum_across_array_dims(Ntotal_sub, 2)
-vacc_ages_labels <- ages_labels[vacc_age_ids]
-summary_vacc_ages <- data.frame(age_groups = vacc_ages_labels,
-                               infections = sum_apv_infections_sub,
-                                micro_cases = sum_apv_MC_sub,
-                                population = sum_apv_Ntotal_sub, 
+sum_apv_infections <- sum_across_array_dims(infections, 2)
+sum_apv_MC <- sum_across_array_dims(MC, 2)
+sum_apv_Ntotal <- sum_across_array_dims(Ntotal, 2)
+
+summary_vacc_ages <- data.frame(age_groups = ages_labels,
+                                infections = sum_apv_infections,
+                                microcephaly = sum_apv_MC,
+                                population = sum_apv_Ntotal, 
                                 stringsAsFactors = FALSE)
 
-write_out_csv(summary_vacc_ages, out_tab_dir, paste0("infections_vacc_age_", my_id))
+write_out_csv(summary_vacc_ages, out_tab_dir, paste0("burden_summary_age_", my_id))

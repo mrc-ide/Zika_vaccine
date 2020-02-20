@@ -1,4 +1,6 @@
 
+# functions for manipulating layout of plots 
+
 g_legend <- function(a.gplot){
   
   tmp <- ggplot_gtable(ggplot_build(a.gplot))

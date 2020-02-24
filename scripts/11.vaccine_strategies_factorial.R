@@ -4,6 +4,7 @@
 library(ZikaModel)
 
 source(file.path("R", "utility_functions.R"))
+source(file.path("R", "calculate_MC_numbers.R"))
 source(file.path("R", "pre_process.R"))
 source(file.path("R", "wrapper_multi_factors_ZikaModel.R"))
 
@@ -87,11 +88,13 @@ vaccine_exps <- loop(fact_combs_ls,
                      wrapper_multi_factors_ZikaModel_2,
                      agec = age_init,
                      death = deathrt,
-                     vaccine_age = vacc_ages,
                      parms = fixed_params,
                      integer_time_steps = its,
                      var_save = diagnostics_to_save,
                      out_dir = out_tab_dir,
+                     mr_pregn_risk = mr_pregn_data,
+                     birth_rates = br_brazil_age,
+                     mr_baseline = mr_baseline,
                      parallel = FALSE)
 
 

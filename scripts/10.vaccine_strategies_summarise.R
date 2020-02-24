@@ -48,6 +48,10 @@ out_melt <- melt(out_df_2,
                  id.vars = c("id", "time"),
                  variable.name = "measure")
 
+
+# plotting --------------------------------------------------------------------
+
+
 p <- plot_by_line_facet(out_melt, 
                         line_var = "id", 
                         facet_var = "measure", 
@@ -64,6 +68,10 @@ p2 <- p +
   scale_colour_viridis_d(name = "Vaccine coverage",
                          option = "C",
                          labels = c("0", "50%", "80%", "100%"))
+
+
+# saving ----------------------------------------------------------------------
+
 
 save_plot(plot_obj = p2,
           out_pth = out_fig_dir, 

@@ -3,7 +3,6 @@
 
 library(ZikaModel)
 library(ggplot2)
-library(viridis)
 library(purrr)
 library(gridExtra)
 

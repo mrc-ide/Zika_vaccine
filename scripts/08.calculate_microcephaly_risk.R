@@ -5,7 +5,6 @@
 library(ZikaModel)
 library(reshape2)
 library(ggplot2)
-library(viridis)
 library(gridExtra)
 
 source(file.path("R", "wrapper_to_save_plot.R"))

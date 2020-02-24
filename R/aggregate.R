@@ -93,7 +93,7 @@ calculate_incidence <- function(cum_infections, Ntotal, time_window) {
     
   }
   
-  if(Ntotal == 0) 0 else out / Ntotal * 1000
+  ifelse(Ntotal == 0, 0, out / Ntotal * 1000)
   
 }
 

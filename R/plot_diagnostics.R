@@ -113,7 +113,6 @@ plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL,
     facet_wrap(facets = as.formula(paste("~", facet_var)), 
                ncol = 1, 
                scales = "free_y") +
-    scale_fill_viridis() +
     scale_y_continuous(name = y_lab_title, limits = my_y_lim, labels = scales::comma) +
     scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
     theme_bw() +

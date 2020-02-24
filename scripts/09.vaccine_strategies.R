@@ -19,7 +19,7 @@ source(file.path("R", "plot_layout.R"))
 # define parameters -----------------------------------------------------------
 
 
-my_id <- 3
+my_id <- 4
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -48,7 +48,7 @@ vacc_coverage_values <- c(0, 0.5, 0.8, 1)
 vacc_starttime <- 1.7  
 
 # ~2 months campaign
-vacc_stoptime <- vacc_starttime + 100 # 0.16 
+vacc_stoptime <- vacc_starttime + 0.16  
 
 # from 9 to 49
 vacc_ages <- c(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0) 
@@ -59,7 +59,7 @@ trial_name <- paste0("experiment_", my_id)
 
 pl_ttl <- gsub("_+", " ", trial_name)
 
-ages_labels <- c("0_1", "2_10", "11_20", "21_30", "31_40", "41_50", "51_60", "61_70", "71_80", "81_90", "91_100") 
+diagnostics_to_save <- c("inf_1", "Ntotal", "MC")
 
 
 # pre processing --------------------------------------------------------------
@@ -330,20 +330,6 @@ plots_age_combined <- arrangeGrob_multi_files(all_plots_age,
                                               legend = TRUE)
 
 
-# create summary table by age -------------------------------------------------
-
-
-sum_apv_infections <- sum_across_array_dims(infections, 2)
-sum_apv_MC <- sum_across_array_dims(MC, 2)
-sum_apv_Ntotal <- sum_across_array_dims(Ntotal, 2)
-
-summary_vacc_ages <- data.frame(age_groups = ages_labels,
-                                infections = sum_apv_infections,
-                                microcephaly = sum_apv_MC,
-                                population = sum_apv_Ntotal, 
-                                stringsAsFactors = FALSE)
-
-
 # save plots ------------------------------------------------------------------
 
 
@@ -376,9 +362,16 @@ save_04 <- imap(plots_age_combined,
                             hgt = 12))
 
 
+# save rds --------------------------------------------------------------------
+
+
+rds_out <- out[diagnostics_to_save]
+
+write_out_rds(rds_out, out_tab_dir, paste0("diagnostics_", my_id))                
+
+                           
 # save tables -----------------------------------------------------------------
 
 
 write_out_csv(exp_des, file.path("output", "vaccine_strategies"), "experimental_design") 
 
-write_out_csv(summary_vacc_ages, out_tab_dir, paste0("burden_summary_age_", my_id))

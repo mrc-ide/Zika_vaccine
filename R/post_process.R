@@ -23,17 +23,12 @@ cbind_time <- function(x, time) {
 
 cbind_id_time <- function(x, id, time) {
   
-  # browser()
-    
-  out <- cbind(id = id, time = time, value = x)  
+  # x is a vetor 
   
-  out_df <- as.data.frame(out)
+  data.frame(id = sprintf("%02d", id), 
+             time = time, 
+             value = x)  
   
-  out_df$id <- factor(out_df$id, 
-                      levels = unique(out_df$id),
-                      labels = unique(out_df$id))
-  
-  out_df
 }
 
 cbind_id <- function(x, id) {
@@ -50,15 +45,19 @@ subset_array <- function(my_array, id_1, id_2) {
 
 vacc_strategies_post_processing <- function(x, id, time) {
   
-  out_1 <- cbind_id_time(x = x, id = id, time = time)
+  out_1 <- cbind_id_time(x = x[, "inf_1"], id = id, time = time)
   
-  out_2 <- cumsum(out_1[, "inf_1"])
+  names(out_1)[names(out_1) == "value"] <- "inf_1"
   
-  out_3 <- cumsum(out_1[, "MC"])
+  out_2 <- cbind(out_1, MC = x[, "MC"], Ntotal = x[, "Ntotal"])
   
-  out_1$inf_1_IR <- calculate_incidence(out_2, out_1$Ntotal, time_window = 7)
+  out_3 <- cumsum(out_2[, "inf_1"])
   
-  out_1$MC_IR <- calculate_incidence(out_3, out_1$Ntotal, time_window = 7) 
+  out_4 <- cumsum(out_2[, "MC"])
   
-  out_1
+  out_2$inf_1_IR <- calculate_incidence(out_3, out_2$Ntotal, time_window = 7)
+  
+  out_2$MC_IR <- calculate_incidence(out_4, out_2$Ntotal, time_window = 7) 
+  
+  out_2
 }

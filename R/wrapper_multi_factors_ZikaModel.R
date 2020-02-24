@@ -1,12 +1,13 @@
 wrapper_multi_factors_ZikaModel_2 <- function(x,
                                               agec, 
                                               death,
-                                              vaccine_age,
                                               parms,
                                               integer_time_steps,
-                                              season = FALSE,
                                               var_save = NULL,
-                                              out_dir) {
+                                              out_dir,
+                                              mr_pregn_risk,
+                                              birth_rates,
+                                              mr_baseline) {
   
   odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
   
@@ -46,6 +47,18 @@ wrapper_multi_factors_ZikaModel_2 <- function(x,
   mod_run <- gen$run(integer_time_steps)
   
   out <- gen$transform_variables(mod_run)
+  
+  infections <- out$inf_1
+  
+  Ntotal <- out$Ntotal
+  
+  MC <- calculate_microcases(N_inf = infections, 
+                             pregnancy_risk_curve = mr_pregn_risk, 
+                             birth_rates = birth_rates, 
+                             N_tot = Ntotal, 
+                             baseline_probM = mr_baseline)
+  
+  out$MC <- MC
   
   if(!is.null(var_save)) out <- out[var_save]
   

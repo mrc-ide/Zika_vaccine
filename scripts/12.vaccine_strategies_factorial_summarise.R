@@ -97,15 +97,15 @@ rects$xend <- rep((vacc_starttime + duration_values) * 364, each = 2)
 # plotting --------------------------------------------------------------------
 
 
+# the first colours of the seq palettes are difficult to see on white bckg
+my_palette <- brewer.pal(n = 9, name = seq_brew_palette)[c(3, 5, 7, 9)]
+
 break_interval <- 0.5
 max_time <- length(tt)
 brks <- seq(from = 0, to = max_time, by = 364 * break_interval)
 
 for (i in seq_along(measure_values)) {
-  
-  # the first colours of the seq palettes are difficult to see on white bckg
-  my_palette <- brewer.pal(n = 9, name = seq_brew_palette)[c(3, 5, 7, 9)]
-  
+
   mes <- measure_values[i]
   
   df <- subset(out_melt, measure == mes) 

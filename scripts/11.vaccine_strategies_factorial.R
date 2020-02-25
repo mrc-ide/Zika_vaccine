@@ -34,7 +34,7 @@ mr_baseline <- 0.0002
 
 plot_interval <- 5 # years
 
-vacc_coverage_values <- c(0.5, 0.8, 1)
+vacc_coverage_values <- c(0, 0.5, 0.8, 1)
 
 vacc_starttime <- 1.7  
 
@@ -59,9 +59,6 @@ exp_des <- expand.grid(vacc_cov = vacc_coverage_values,
                        target_pop = target_pop_values,
                        duration = duration_values, 
                        stringsAsFactors = FALSE)
-
-exp_des <- rbind(c(vacc_cov = 0, target_pop = 1, duration = 0),
-                 exp_des)
 
 exp_des <- cbind(id = sprintf("%02d", seq_len(nrow(exp_des))),
                  exp_des)

@@ -12,7 +12,7 @@ source(file.path("R", "plot_diagnostics.R"))
 source(file.path("R", "utility_functions.R"))
 
 
-# -----------------------------------------------------------------------------
+# define parameters -----------------------------------------------------------
 
 
 vacc_starttime <- 1.7  
@@ -35,7 +35,7 @@ exp_des <- read.csv(file.path(data_path, "experimental_design.csv"),
                     colClasses = c("factor", "numeric", "numeric", "numeric"))
 
 
-# pre processing --------------------------------------------------------------
+# plot pre processing ---------------------------------------------------------
 
 
 fl_nms <- list.files(data_path, pattern = "*.rds", full.names = TRUE)
@@ -112,10 +112,7 @@ for (i in seq_along(measure_values)) {
   
   p <- ggplot(df) +
     geom_rect(data = rects,
-              aes(xmin = xstart, 
-                  xmax = xend, 
-                  ymin = -Inf, 
-                  ymax = Inf), 
+              aes(xmin = xstart, xmax = xend, ymin = -Inf, ymax = Inf), 
               fill = "lightskyblue1",
               alpha = 0.3) +
     geom_line(aes_string(x = "time", y = "value", colour = "vacc_cov")) +
@@ -131,7 +128,7 @@ for (i in seq_along(measure_values)) {
                        labels = labs_values[[i]],
                        expand = expand_scale(mult = c(0, 0))) +
     scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-    coord_cartesian(xlim = c(0, 1820)) +
+    coord_cartesian(xlim = c(0, max_time)) +
     theme_bw() +
     theme(axis.text.x = element_text(size = 8),
           axis.text.y = element_text(size = 8),
@@ -147,3 +144,25 @@ for (i in seq_along(measure_values)) {
             hgt = 15)
   
 }
+
+
+# calculate infections and MC averted by the vaccine --------------------------
+
+
+sim_data_ls_sums <- lapply(sim_data_ls_1, vapply, sum, numeric(1))
+
+out_sums <- do.call("rbind", sim_data_ls_sums)
+
+out_sums_df <- out_sums %>%
+  as.data.frame() %>%
+  mutate(id = as.factor(sprintf("%02d", seq_len(nrow(out_sums))))) %>%
+  left_join(exp_des, by = "id") %>%
+  mutate(red_inf_1 = (inf_1[1] - inf_1) / inf_1) %>%
+  mutate(red_MC = (MC[1] - MC) / MC) %>%
+  select(- Ntotal)
+
+
+# save table ------------------------------------------------------------------
+
+
+write_out_csv(out_sums_df, data_path, "results") 

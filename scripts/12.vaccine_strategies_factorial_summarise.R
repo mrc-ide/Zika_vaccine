@@ -71,7 +71,7 @@ out_melt$duration <- factor(out_melt$duration,
 
 out_melt$vacc_cov <- factor(out_melt$vacc_cov, 
                             levels = unique(out_melt$vacc_cov),
-                            labels = c("0", "50%", "80%", "100%"))
+                            labels = c("0%", "50%", "80%", "100%"))
 
 measure_values <- levels(out_melt$measure)
 

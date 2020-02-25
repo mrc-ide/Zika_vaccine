@@ -67,7 +67,7 @@ out_melt$target_pop <- factor(out_melt$target_pop,
 
 out_melt$duration <- factor(out_melt$duration, 
                             levels = unique(out_melt$duration),
-                            labels = c("2 months", ">5 years"))
+                            labels = c("2 months", ">3.5 years"))
 
 out_melt$vacc_cov <- factor(out_melt$vacc_cov, 
                             levels = unique(out_melt$vacc_cov),

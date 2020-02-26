@@ -19,7 +19,7 @@ ages_labels <- c("0_1", "2_10", "11_20", "21_30", "31_40", "41_50", "51_60", "61
 
 data_path <- file.path("output", "vaccine_strategies")
   
-out_fig_dir <- file.path("figures", "vaccine_strategies")
+out_fig_path <- file.path("figures", "vaccine_strategies")
 
 
 # create summary table by age -------------------------------------------------
@@ -74,15 +74,9 @@ p2 <- p +
 
 
 save_plot(plot_obj = p2,
-          out_pth = out_fig_dir, 
+          out_pth = out_fig_path, 
           out_fl_nm = paste("summary_coverage"), 
           wdt = 17, 
           hgt = 15)
 
-# summary_vacc_ages <- data.frame(age_groups = ages_labels,
-#                                 infections = sum_apv_infections,
-#                                 microcephaly = sum_apv_MC,
-#                                 population = sum_apv_Ntotal, 
-#                                 stringsAsFactors = FALSE)
-# 
-# write_out_csv(summary_vacc_ages, out_tab_dir, paste0("burden_summary_age_", my_id))
+write_out_rds(out_melt, data_path, "summary_coverage_data")

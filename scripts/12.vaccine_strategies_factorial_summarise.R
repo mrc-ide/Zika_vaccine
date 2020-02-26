@@ -15,13 +15,13 @@ source(file.path("R", "utility_functions.R"))
 # define parameters -----------------------------------------------------------
 
 
+experiment_name <- file.path("vaccine_strategies", "factorial_2")
+
 vacc_starttime <- 1.7  
 
 tt <- seq.int(1, 5*364, 1)
   
 ages_labels <- c("0_1", "2_10", "11_20", "21_30", "31_40", "41_50", "51_60", "61_70", "71_80", "81_90", "91_100") 
-
-experiment_name <- file.path("vaccine_strategies", "factorial")
 
 data_path <- file.path("output", experiment_name)
   
@@ -32,7 +32,7 @@ out_fig_path <- file.path("figures", experiment_name)
 
 
 exp_des <- read.csv(file.path(data_path, "experimental_design.csv"),
-                    colClasses = c("factor", "numeric", "numeric", "numeric"))
+                    colClasses = c("numeric", "numeric", "numeric", "numeric", "factor"))
 
 
 # plot pre processing ---------------------------------------------------------
@@ -58,7 +58,7 @@ out_df_2 <- out_df[, setdiff(names(out_df), c("inf_1", "Ntotal", "MC"))]
 out_df_3 <- left_join(out_df_2, exp_des, by = "id")
 
 out_melt <- melt(out_df_3,
-                 id.vars = c("id", "time", "vacc_cov", "target_pop", "duration"),
+                 id.vars = c("id", "time", "vacc_cov", "target_pop", "duration", "efficacy"),
                  variable.name = "measure")
 
 out_melt$target_pop <- factor(out_melt$target_pop, 
@@ -75,6 +75,8 @@ out_melt$vacc_cov <- factor(out_melt$vacc_cov,
 
 measure_values <- levels(out_melt$measure)
 
+efficacy_values <- unique(out_melt$efficacy)
+  
 # qual_brew_palette <- "Set1"
 
 seq_brew_palette <- "YlOrRd"
@@ -105,43 +107,49 @@ max_time <- length(tt)
 brks <- seq(from = 0, to = max_time, by = 364 * break_interval)
 
 for (i in seq_along(measure_values)) {
-
+  
   mes <- measure_values[i]
   
-  df <- subset(out_melt, measure == mes) 
-  
-  p <- ggplot(df) +
-    geom_rect(data = rects,
-              aes(xmin = xstart, xmax = xend, ymin = -Inf, ymax = Inf), 
-              fill = "lightskyblue1",
-              alpha = 0.3) +
-    geom_line(aes_string(x = "time", y = "value", colour = "vacc_cov")) +
-    geom_vline(xintercept = vacc_starttime * 364, linetype = "dashed") +
-    facet_grid(facets = target_pop ~ duration) +    
-    scale_colour_manual(name = "Vaccine coverage",
-                        values = my_palette) +
-    # scale_color_brewer(name = "Vaccine coverage",
-    #                    palette = qual_brew_palette) +
-    scale_y_continuous(name = "Weekly numbers/1000", 
-                       breaks = brks_values[[i]],
-                       limits = lmts_values[[i]],
-                       labels = labs_values[[i]],
-                       expand = expand_scale(mult = c(0, 0))) +
-    scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-    coord_cartesian(xlim = c(0, max_time)) +
-    theme_bw() +
-    theme(axis.text.x = element_text(size = 8),
-          axis.text.y = element_text(size = 8),
-          strip.text.x = element_text(size = 8),
-          legend.position = "bottom") + 
-    guides(colour = guide_legend(nrow = 1)) + 
-    ggtitle(paste0(plot_ttls[i], " by vaccine target ages and duration"))
-  
-  save_plot(plot_obj = p,
-            out_pth = out_fig_path, 
-            out_fl_nm = sprintf("summary_factorial_%s", mes), 
-            wdt = 17, 
-            hgt = 15)
+  for (j in seq_along(efficacy_values)) {
+    
+    eff <- efficacy_values[j]
+    
+    df <- subset(out_melt, measure == mes & efficacy == eff) 
+    
+    p <- ggplot(df) +
+      geom_rect(data = rects,
+                aes(xmin = xstart, xmax = xend, ymin = -Inf, ymax = Inf), 
+                fill = "lightskyblue1",
+                alpha = 0.3) +
+      geom_line(aes_string(x = "time", y = "value", colour = "vacc_cov")) +
+      geom_vline(xintercept = vacc_starttime * 364, linetype = "dashed") +
+      facet_grid(facets = target_pop ~ duration) +    
+      scale_colour_manual(name = "Vaccine coverage",
+                          values = my_palette) +
+      # scale_color_brewer(name = "Vaccine coverage",
+      #                    palette = qual_brew_palette) +
+      scale_y_continuous(name = "Weekly numbers/1000", 
+                         breaks = brks_values[[i]],
+                         limits = lmts_values[[i]],
+                         labels = labs_values[[i]],
+                         expand = expand_scale(mult = c(0, 0))) +
+      scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
+      coord_cartesian(xlim = c(0, max_time)) +
+      theme_bw() +
+      theme(axis.text.x = element_text(size = 8),
+            axis.text.y = element_text(size = 8),
+            strip.text.x = element_text(size = 8),
+            legend.position = "bottom") + 
+      guides(colour = guide_legend(nrow = 1)) + 
+      ggtitle(sprintf("%s by vaccine target ages and duration (%s%% efficacy)", plot_ttls[i], eff*100))
+    
+    save_plot(plot_obj = p,
+              out_pth = out_fig_path, 
+              out_fl_nm = sprintf("summary_factorial_%s_%s", mes, j), 
+              wdt = 17, 
+              hgt = 15)
+    
+  }
   
 }
 

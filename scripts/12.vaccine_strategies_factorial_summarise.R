@@ -25,7 +25,7 @@ experiment_name <- file.path("vaccine_strategies", "factorial")
 
 data_path <- file.path("output", experiment_name)
   
-out_fig_dir <- file.path("figures", experiment_name)
+out_fig_path <- file.path("figures", experiment_name)
 
 
 # load data -------------------------------------------------------------------
@@ -38,7 +38,7 @@ exp_des <- read.csv(file.path(data_path, "experimental_design.csv"),
 # plot pre processing ---------------------------------------------------------
 
 
-fl_nms <- list.files(data_path, pattern = "*.rds", full.names = TRUE)
+fl_nms <- list.files(data_path, pattern = "^diagnostics", full.names = TRUE)
 
 sim_data <- lapply(fl_nms, readRDS)
 
@@ -138,7 +138,7 @@ for (i in seq_along(measure_values)) {
     ggtitle(paste0(plot_ttls[i], " by vaccine target ages and duration"))
   
   save_plot(plot_obj = p,
-            out_pth = out_fig_dir, 
+            out_pth = out_fig_path, 
             out_fl_nm = sprintf("summary_factorial_%s", mes), 
             wdt = 17, 
             hgt = 15)
@@ -166,3 +166,5 @@ out_sums_df <- out_sums %>%
 
 
 write_out_csv(out_sums_df, data_path, "results") 
+
+write_out_rds(out_melt, data_path, "summary_factorial_data")

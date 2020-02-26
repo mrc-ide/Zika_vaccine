@@ -53,6 +53,8 @@ if (CLUSTER) {
 # define parameters -----------------------------------------------------------
 
 
+experiment_name <- file.path("vaccine_strategies", "factorial_2")
+
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
 deathrt <- c(1e-10,
@@ -92,8 +94,6 @@ eff_values <- c(0.75, 1)
 
 # pre processing --------------------------------------------------------------
 
-
-experiment_name <- file.path("vaccine_strategies", "factorial_2")
 
 out_tab_dir <- file.path("output", experiment_name)
 

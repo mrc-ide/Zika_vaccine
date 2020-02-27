@@ -24,7 +24,7 @@ exp_des_nm <- "experimental_design_2"
 
 vacc_coverage_values <- c(0, 0.5, 0.8, 1)
 
-prop_immune_values <- c(0.25, 5)
+prop_immune_values <- c(0.25, 0.5)
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 

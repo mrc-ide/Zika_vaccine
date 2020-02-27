@@ -18,7 +18,13 @@ source(file.path("R", "plot_layout.R"))
 # define parameters -----------------------------------------------------------
 
 
-my_id <- 4
+my_id <- 6
+
+exp_des_nm <- "experimental_design_2"
+
+vacc_coverage_values <- c(0, 0.5, 0.8, 1)
+
+prop_immune_values <- c(0.25, 5)
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -42,21 +48,15 @@ mr_baseline <- 0.0002
 
 plot_interval <- 5 # years
 
-vacc_coverage_values <- c(0, 0.5, 0.8, 1)
-
 vacc_starttime <- 1.7  
 
 # ~2 months campaign
-vacc_stoptime <- vacc_starttime + 0.16  
+vacc_duration <- 0.16
 
 # from 9 to 49
 vacc_ages <- c(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0) 
 
 odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
-
-trial_name <- paste0("experiment_", my_id)
-
-pl_ttl <- gsub("_+", " ", trial_name)
 
 diagnostics_to_save <- c("inf_1", "Ntotal", "MC")
 
@@ -64,29 +64,40 @@ diagnostics_to_save <- c("inf_1", "Ntotal", "MC")
 # pre processing --------------------------------------------------------------
 
 
-experiment_name <- file.path("vaccine_strategies", trial_name)
+experiment_name <- paste0("experiment_", my_id)
 
-out_fig_dir <- file.path("figures", experiment_name)
+experiment_path <- file.path("vaccine_strategies", experiment_name)
 
-out_tab_dir <- file.path("output", experiment_name)
+out_fig_dir <- file.path("figures", experiment_path)
+
+out_tab_dir <- file.path("output", experiment_path)
+
+pl_ttl <- gsub("_+", " ", experiment_name)
 
 plot_type <- c("total", "by_patch", "by_vaccine", "by_age") 
 
-exp_des <- data.frame(id = seq_len(length(vacc_coverage_values)), 
-                      vacc_cov = vacc_coverage_values)
+exp_des <- expand.grid(vacc_cov = vacc_coverage_values,
+                       prop_immune = prop_immune_values)
+
+exp_des$id <- seq_len(nrow(exp_des)) + 4
 
 exp_des_one <- exp_des[exp_des$id == my_id,]
 
 vacc_child_cov <- exp_des_one[, "vacc_cov"]
 
+prop_immune <- exp_des_one[, "prop_immune"]
+
 integer_time_steps <- (364 * time_years) / my_dt
 
 its <- seq(0, integer_time_steps, 1)
 
+vacc_stoptime <- vacc_starttime + vacc_duration  
+
 params <- list(DT = my_dt,
                vacc_child_coverage = vacc_child_cov,
                vacc_child_starttime = vacc_starttime,
-               vacc_child_stoptime = vacc_stoptime)
+               vacc_child_stoptime = vacc_stoptime,
+               other_prop_immune = prop_immune)
 
 
 # load data -------------------------------------------------------------------
@@ -372,5 +383,4 @@ write_out_rds(rds_out, out_tab_dir, paste0("diagnostics_", my_id))
 # save tables -----------------------------------------------------------------
 
 
-write_out_csv(exp_des, file.path("output", "vaccine_strategies"), "experimental_design") 
-
+write_out_csv(exp_des, file.path("output", "vaccine_strategies"), exp_des_nm) 

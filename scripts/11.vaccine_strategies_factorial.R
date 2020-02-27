@@ -16,7 +16,7 @@ if (CLUSTER) {
   
   # running out of place
   
-  workdir <- "Q:/CHIK_vaccine"
+  workdir <- "Q:/Zika_vaccine"
   didehpc::didehpc_config_global(workdir = workdir)
   root <- file.path(workdir, "context")
   
@@ -53,7 +53,7 @@ if (CLUSTER) {
 # define parameters -----------------------------------------------------------
 
 
-experiment_name <- file.path("vaccine_strategies", "factorial_2")
+experiment_name <- file.path("vaccine_strategies", "factorial_3")
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -91,6 +91,8 @@ duration_values <- c(0.16, time_years + 1)
 
 eff_values <- c(0.75, 1)
 
+prop_immune_values <- c(0, 0.25, 0.5)
+
 
 # pre processing --------------------------------------------------------------
 
@@ -101,6 +103,7 @@ exp_des <- expand.grid(vacc_cov = vacc_coverage_values,
                        target_pop = target_pop_values,
                        duration = duration_values, 
                        efficacy = eff_values,
+                       prop_imm = prop_immune_values,
                        stringsAsFactors = FALSE)
 
 exp_des$id <- sprintf("%02d", seq_len(nrow(exp_des)))

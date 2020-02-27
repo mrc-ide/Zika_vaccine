@@ -36,7 +36,7 @@ wrapper_multi_factors_ZikaModel_2 <- function(x,
   factorial_params <- list(vacc_child_coverage = vacc_child_cov,
                            vacc_child_stoptime = vacc_stoptime,
                            vacceff_prim = vacc_eff,
-                           other_prop_immune = prop_immune)
+                           other_prop_immune = prop_imm)
   
   params <- c(parms, factorial_params)
 

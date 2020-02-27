@@ -16,13 +16,15 @@ wrapper_multi_factors_ZikaModel_2 <- function(x,
   target_pop <- x$target_pop
   vacc_duration <- x$duration
   vacc_eff <- x$efficacy
+  prop_imm <- x$prop_imm
   
   message("ID = ", id)
   message("coverage = ", vacc_child_cov)
   message("target population = " , target_pop)
   message("duration = ", vacc_duration)
   message("efficacy = ", vacc_eff)
-    
+  message("existing immunity = ", prop_imm)  
+  
   
   message("--------------------------------------------------------------------")
   
@@ -33,7 +35,8 @@ wrapper_multi_factors_ZikaModel_2 <- function(x,
   
   factorial_params <- list(vacc_child_coverage = vacc_child_cov,
                            vacc_child_stoptime = vacc_stoptime,
-                           vacceff_prim = vacc_eff)
+                           vacceff_prim = vacc_eff,
+                           other_prop_immune = prop_immune)
   
   params <- c(parms, factorial_params)
 

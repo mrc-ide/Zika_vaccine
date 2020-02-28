@@ -1,7 +1,7 @@
 wrapper_multi_factors_ZikaModel_2 <- function(x,
                                               agec, 
                                               death,
-                                              parms,
+                                              parms = NULL,
                                               integer_time_steps,
                                               var_save = NULL,
                                               out_dir,
@@ -28,18 +28,34 @@ wrapper_multi_factors_ZikaModel_2 <- function(x,
   
   message("--------------------------------------------------------------------")
   
+
+  if(!is.null(parms)) {
+    
+    vacc_stoptime <- parms$vacc_child_starttime + vacc_duration
+    
+    factorial_params <- list(vacc_child_coverage = vacc_child_cov,
+                             vacc_child_stoptime = vacc_stoptime,
+                             vacceff_prim = vacc_eff,
+                             other_prop_immune = prop_imm)
+    
+    params <- c(parms, factorial_params)
+    
+  } else {
+    
+    vacc_starttime <- get_vacc_start_time(prop_imm)
+      
+    vacc_stoptime <- vacc_starttime + vacc_duration
+    
+    params <- list(vacc_child_starttime = vacc_starttime,
+                   vacc_child_coverage = vacc_child_cov,
+                   vacc_child_stoptime = vacc_stoptime,
+                   vacceff_prim = vacc_eff,
+                   other_prop_immune = prop_imm)
+    
+  }
   
   vaccine_ages <- vaccine_target_code_to_age(target_pop)
   
-  vacc_stoptime <- parms$vacc_child_starttime + vacc_duration
-  
-  factorial_params <- list(vacc_child_coverage = vacc_child_cov,
-                           vacc_child_stoptime = vacc_stoptime,
-                           vacceff_prim = vacc_eff,
-                           other_prop_immune = prop_imm)
-  
-  params <- c(parms, factorial_params)
-
   create_generator <- ZikaModel::create_r_model(odin_model_path = odin_model_path,
                                                 agec = agec,
                                                 death = death,

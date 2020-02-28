@@ -18,13 +18,13 @@ source(file.path("R", "plot_layout.R"))
 # define parameters -----------------------------------------------------------
 
 
-my_id <- 6
+my_id <- 8
 
 exp_des_nm <- "experimental_design_2"
 
-vacc_coverage_values <- c(0, 0.5, 0.8, 1)
+vacc_coverage_values <- c(0, 0.5)
 
-prop_immune_values <- c(0.25, 0.5)
+prop_immune_values <- c(0, 0.25)
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -50,8 +50,7 @@ plot_interval <- 5 # years
 
 vacc_starttime <- 1.7  
 
-# ~2 months campaign
-vacc_duration <- 0.16
+vacc_duration <- 3.5 # 0.16
 
 # from 9 to 49
 vacc_ages <- c(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0) 

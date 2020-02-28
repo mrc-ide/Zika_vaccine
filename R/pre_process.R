@@ -17,3 +17,25 @@ vaccine_target_code_to_age <- function(code) {
   out
 
 }
+
+get_vacc_start_time <- function(preexisting_immunity_level) {
+  
+  if(preexisting_immunity_level == 0) {
+    
+    out <- 1.7
+  }  
+  
+  if(preexisting_immunity_level == 0.25) {
+    
+    out <- 2.2
+  }
+  
+  if(preexisting_immunity_level == 0.5) {
+    
+    out <- 3.5
+    
+  }
+  
+  out
+
+}

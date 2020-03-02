@@ -54,7 +54,11 @@ if (CLUSTER) {
 # define parameters -----------------------------------------------------------
 
 
-experiment_name <- file.path("vaccine_strategies", "factorial_4")
+experiment_no <- 4
+
+experiment_name <- paste0("factorial_", experiment_no)
+  
+experiment_path <- file.path("vaccine_strategies", experiment_name)
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -98,7 +102,7 @@ prop_immune_values <- c(0, 0.25, 0.5)
 # pre processing --------------------------------------------------------------
 
 
-out_tab_dir <- file.path("output", experiment_name)
+out_tab_dir <- file.path("output", experiment_path)
 
 exp_des <- expand.grid(vacc_cov = vacc_coverage_values,
                        target_pop = target_pop_values,
@@ -156,7 +160,8 @@ if (CLUSTER) {
     out_dir = out_tab_dir,
     mr_pregn_risk = mr_pregn_data,
     birth_rates = br_brazil_age,
-    mr_baseline = mr_baseline)
+    mr_baseline = mr_baseline,
+    name = experiment_name)
   
 } else {
   
@@ -178,4 +183,4 @@ if (CLUSTER) {
 # save output -----------------------------------------------------------------
 
 
-write_out_csv(exp_des, out_tab_dir, "experimental_design") 
+write_out_csv(exp_des, out_tab_dir, paste0("experimental_design_", experiment_no)) 

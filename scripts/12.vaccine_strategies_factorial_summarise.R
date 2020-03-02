@@ -10,16 +10,17 @@ source(file.path("R", "aggregate.R"))
 source(file.path("R", "post_process.R"))
 source(file.path("R", "plot_diagnostics.R"))
 source(file.path("R", "utility_functions.R"))
+source(file.path("R", "pre_process.R"))
 
 
 # define parameters -----------------------------------------------------------
 
 
-experiment_name <- file.path("vaccine_strategies", "factorial_3")
+experiment_name <- file.path("vaccine_strategies", "factorial_4")
 
-vacc_starttime <- 1.7  
+no_years <- 6
 
-tt <- seq.int(1, 5*364, 1)
+tt <- seq.int(1, 364 * no_years, 1)
   
 ages_labels <- c("0_1", "2_10", "11_20", "21_30", "31_40", "41_50", "51_60", "61_70", "71_80", "81_90", "91_100") 
 
@@ -42,7 +43,7 @@ fl_nms <- list.files(data_path, pattern = "^diagnostics", full.names = TRUE)
 
 sim_data <- lapply(fl_nms, readRDS)
 
-sim_data_ls_1 <- lapply(sim_data, lapply, subset_array, 1, 364*5)
+sim_data_ls_1 <- lapply(sim_data, lapply, subset_array, 1, 364 * no_years)
 
 sim_data_ls_2 <- lapply(sim_data_ls_1, lapply, sum_across_array_dims, 1)
 
@@ -91,11 +92,17 @@ lmts_values <- list(c(0,30), c(0,0.004))
 
 labs_values <- list(seq(0,25,5), seq(0,0.003,0.001))
 
-duration_values <- c(0.16, 3.3)
+vacc_starttime <- get_vacc_start_time(imm_values)
 
-rects <- unique(out_melt[, c("target_pop", "duration")])
-rects$xstart <- vacc_starttime * 364
-rects$xend <- rep((vacc_starttime + duration_values) * 364, each = 2)
+vacc_starttime_all <- rep(vacc_starttime, each = 4)
+
+duration_values <- c(0.16, 51)
+
+duration_values_all <- rep(rep(duration_values, each = 2), 3)
+
+rects <- unique(out_melt[, c("target_pop", "duration", "prop_imm")])
+rects$xstart <- vacc_starttime_all * 364
+rects$xend <- (vacc_starttime_all + duration_values_all) * 364
 
 
 # plotting --------------------------------------------------------------------
@@ -120,15 +127,19 @@ for (i in seq_along(measure_values)) {
       
       imm <- imm_values[k]
       
+      v_s <- vacc_starttime[k]
+      
+      rects_2 <- subset(rects, prop_imm == imm)
+      
       df <- subset(out_melt, measure == mes & efficacy == eff & prop_imm == imm)
       
       p <- ggplot(df) +
-        geom_rect(data = rects,
+        geom_rect(data = rects_2,
                   aes(xmin = xstart, xmax = xend, ymin = -Inf, ymax = Inf),
                   fill = "lightskyblue1",
                   alpha = 0.3) +
         geom_line(aes_string(x = "time", y = "value", colour = "vacc_cov")) +
-        geom_vline(xintercept = vacc_starttime * 364, linetype = "dashed") +
+        geom_vline(xintercept = v_s * 364, linetype = "dashed") +
         facet_grid(facets = target_pop ~ duration) +
         scale_colour_manual(name = "Vaccine coverage",
                             values = my_palette) +
@@ -140,7 +151,7 @@ for (i in seq_along(measure_values)) {
                            labels = labs_values[[i]],
                            expand = expand_scale(mult = c(0, 0))) +
         scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-        coord_cartesian(xlim = c(0, max_time)) +
+        coord_cartesian(xlim = c(0, max_time), expand = FALSE) +
         theme_bw() +
         theme(axis.text.x = element_text(size = 8),
               axis.text.y = element_text(size = 8),
@@ -151,7 +162,7 @@ for (i in seq_along(measure_values)) {
       
       wdt <- length(imm_values)
       
-      my_index <- (j* wdt + k) - wdt 
+      my_index <- (j * wdt + k) - wdt 
       
       message(my_index)
       

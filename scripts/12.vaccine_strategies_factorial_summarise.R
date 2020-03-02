@@ -16,7 +16,9 @@ source(file.path("R", "pre_process.R"))
 # define parameters -----------------------------------------------------------
 
 
-experiment_no <- 4
+experiment_no <- 5
+
+copy_files <- TRUE 
 
 experiment_name <- paste0("factorial_", experiment_no)
 
@@ -36,12 +38,24 @@ out_fig_path <- file.path("figures", experiment_path)
 # load data -------------------------------------------------------------------
 
 
-exp_des <- read.csv(file.path(data_path, "experimental_design.csv"),
+exp_des <- read.csv(file.path(data_path, paste0("experimental_design_", experiment_no, ".csv")),
                     colClasses = c("numeric", "numeric", "numeric", "numeric", "numeric", "factor"))
 
 
 # plot pre processing ---------------------------------------------------------
 
+
+if(copy_files) {
+  
+  root <- file.path("Q:", "Zika_vaccine")
+  
+  share_path <- file.path(root, data_path)
+  
+  fl_path_all <- list.files(share_path, pattern = "^diagnostics", full.names = TRUE)
+  
+  copy_from_share(root, fl_path_all)
+    
+}
 
 fl_nms <- list.files(data_path, pattern = "^diagnostics", full.names = TRUE)
 

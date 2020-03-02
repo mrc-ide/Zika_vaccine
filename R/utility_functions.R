@@ -84,3 +84,44 @@ write_out_csv <- function(dat, my_path, file_name) {
     row.names = FALSE)
   
 }
+
+copy_from_share <- function(root, fl_path_all) {
+  
+  for (i in seq_along(fl_path_all)){
+    
+    path_i <- fl_path_all[[i]]
+    
+    message(path_i)
+    
+    path_from_i <- path_i
+    
+    # match root
+    path_from_i_no_root <- sub(paste0(root,"/"), "", path_from_i)
+    
+    # match everything before the last occurrence of /
+    path_to_i <- sub("/([^/]*)$", "", path_from_i_no_root)
+    
+    if(!dir.exists(path_to_i)) dir.create(path_to_i, FALSE, TRUE)
+    
+    file.copy(path_from_i, path_to_i, overwrite = FALSE)
+    
+    last_three_digits <- sub("^([^.]*).", "", path_i)
+    
+    if(last_three_digits == "shp"){
+      
+      evr_but_last_three_digits <- sub(".([^.]*)$", "", path_i)
+      
+      path_from_i_1 <- file.path(root, paste0(evr_but_last_three_digits, ".dbf"))
+      file.copy(path_from_i_1, path_to_i, overwrite = FALSE)
+      
+      path_from_i_2 <- file.path(root, paste0(evr_but_last_three_digits, ".prj"))
+      file.copy(path_from_i_2, path_to_i, overwrite = FALSE)
+      
+      path_from_i_3 <- file.path(root, paste0(evr_but_last_three_digits, ".shx"))
+      file.copy(path_from_i_3, path_to_i, overwrite = FALSE)
+      
+    }
+    
+  }
+  
+}

@@ -25,16 +25,18 @@ get_vacc_start_time <- function(preexisting_immunity_level) {
     if(preexisting_immunity_level == 0) {
       
       out <- 1.3
+      
     }  
     
     if(preexisting_immunity_level == 0.25) {
       
       out <- 1.75
+      
     }
     
     if(preexisting_immunity_level == 0.5) {
       
-      out <- 2.5
+      out <- 2.6
       
     }
     

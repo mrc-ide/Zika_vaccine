@@ -16,7 +16,11 @@ source(file.path("R", "pre_process.R"))
 # define parameters -----------------------------------------------------------
 
 
-experiment_name <- file.path("vaccine_strategies", "factorial_4")
+experiment_no <- 4
+
+experiment_name <- paste0("factorial_", experiment_no)
+
+experiment_path <- file.path("vaccine_strategies", experiment_name)
 
 no_years <- 6
 
@@ -24,9 +28,9 @@ tt <- seq.int(1, 364 * no_years, 1)
   
 ages_labels <- c("0_1", "2_10", "11_20", "21_30", "31_40", "41_50", "51_60", "61_70", "71_80", "81_90", "91_100") 
 
-data_path <- file.path("output", experiment_name)
+data_path <- file.path("output", experiment_path)
   
-out_fig_path <- file.path("figures", experiment_name)
+out_fig_path <- file.path("figures", experiment_path)
 
 
 # load data -------------------------------------------------------------------
@@ -200,6 +204,6 @@ out_sums_df <- out_sums %>%
 # save table ------------------------------------------------------------------
 
 
-write_out_csv(out_sums_df, data_path, "results") 
+write_out_csv(out_sums_df, data_path, paste0("results_", experiment_no)) 
 
 write_out_rds(out_melt, data_path, "summary_factorial_data")

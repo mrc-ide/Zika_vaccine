@@ -5,7 +5,8 @@ options(didehpc.cluster = "fi--didemrchnb")
 
 CLUSTER <- TRUE
 
-my_resources <- c(file.path("R", "utility_functions.R"),
+my_resources <- c(file.path("R", "pre_process.R"),
+                  file.path("R", "utility_functions.R"),
                   file.path("R", "calculate_MC_numbers.R"),
                   file.path("R", "pre_process.R"),
                   file.path("R", "wrapper_multi_factors_ZikaModel.R"))
@@ -38,7 +39,7 @@ ctx <- context::context_save(path = root,
 
 if (CLUSTER) {
   
-  config <- didehpc::didehpc_config(template = "24Core", rtools = TRUE)
+  config <- didehpc::didehpc_config(template = "20Core", rtools = TRUE)
   
   obj <- didehpc::queue_didehpc(ctx, config = config)
   
@@ -53,7 +54,7 @@ if (CLUSTER) {
 # define parameters -----------------------------------------------------------
 
 
-experiment_name <- file.path("vaccine_strategies", "factorial_3")
+experiment_name <- file.path("vaccine_strategies", "factorial_4")
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -77,11 +78,11 @@ mr_baseline <- 0.0002
 
 plot_interval <- 5 # years
 
-vacc_starttime <- 1.7  
+# vacc_starttime <- 1.7  
+
+# fixed_params <- list(vacc_child_starttime = vacc_starttime)
 
 diagnostics_to_save <- c("inf_1", "Ntotal", "MC")
-
-fixed_params <- list(vacc_child_starttime = vacc_starttime)
 
 vacc_coverage_values <- c(0, 0.5, 0.8, 1)
 
@@ -150,7 +151,6 @@ if (CLUSTER) {
     obj,
     agec = age_init,
     death = deathrt,
-    parms = fixed_params,
     integer_time_steps = its,
     var_save = diagnostics_to_save,
     out_dir = out_tab_dir,
@@ -164,7 +164,6 @@ if (CLUSTER) {
                        wrapper_multi_factors_ZikaModel_2,
                        agec = age_init,
                        death = deathrt,
-                       parms = fixed_params,
                        integer_time_steps = its,
                        var_save = diagnostics_to_save,
                        out_dir = out_tab_dir,

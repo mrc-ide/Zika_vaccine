@@ -151,7 +151,7 @@ for (i in seq_along(measure_values)) {
                            labels = labs_values[[i]],
                            expand = expand_scale(mult = c(0, 0))) +
         scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-        coord_cartesian(xlim = c(0, max_time), expand = FALSE) +
+        coord_cartesian(xlim = c(0, max_time)) +
         theme_bw() +
         theme(axis.text.x = element_text(size = 8),
               axis.text.y = element_text(size = 8),

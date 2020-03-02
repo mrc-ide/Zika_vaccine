@@ -20,22 +20,38 @@ vaccine_target_code_to_age <- function(code) {
 
 get_vacc_start_time <- function(preexisting_immunity_level) {
   
-  if(preexisting_immunity_level == 0) {
+  core <- function(preexisting_immunity_level) {
     
-    out <- 1.7
-  }  
-  
-  if(preexisting_immunity_level == 0.25) {
+    if(preexisting_immunity_level == 0) {
+      
+      out <- 1.7
+    }  
     
-    out <- 2.2
+    if(preexisting_immunity_level == 0.25) {
+      
+      out <- 2.2
+    }
+    
+    if(preexisting_immunity_level == 0.5) {
+      
+      out <- 3.5
+      
+    }
+    
+    out
+    
   }
   
-  if(preexisting_immunity_level == 0.5) {
+  if(length(preexisting_immunity_level) > 1) {
     
-    out <- 3.5
+    ret <- vapply(preexisting_immunity_level, core, numeric(1)) 
+  
+  } else {
     
+    ret <- core(preexisting_immunity_level) 
+  
   }
   
-  out
-
+  ret
+  
 }

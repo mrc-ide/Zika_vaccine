@@ -18,7 +18,7 @@ source(file.path("R", "plot_layout.R"))
 # define parameters -----------------------------------------------------------
 
 
-my_id <- 8
+my_id <- 5
 
 exp_des_nm <- "experimental_design_2"
 
@@ -96,7 +96,8 @@ params <- list(DT = my_dt,
                vacc_child_coverage = vacc_child_cov,
                vacc_child_starttime = vacc_starttime,
                vacc_child_stoptime = vacc_stoptime,
-               other_prop_immune = prop_immune)
+               other_prop_immune = prop_immune,
+               Mwt_mean = 1)
 
 
 # load data -------------------------------------------------------------------
@@ -154,11 +155,32 @@ plot_total <- c("S", "I1", "R1", "Ntotal", "births", "inf_1", "MC")
 
 plot_total_inc <- c("inf_1", "MC")
 
+plot_total_inc_lab <- paste0("w_", plot_total_inc)
+
+plot_mean <- c("Kcav", "eipav", "Deltaav", "R0t_1av", "FOI1av")
+  
+plot_total_p <- c("S", "I1", "R1", "Ntotal", "pS", "pI1", "pR1", "births", "inf_1", "MC")
+
+y_labels <- c("number", "number", "number", "number", "proportion", "proportion", 
+              "proportion", "number", "number", "number",
+              "weekly number/1000", "weekly number/1000", 
+              rep("mean patch", 5))
+
+titles <- c("Susceptibles", "Infected", "Recovered", "Total",
+            "Susceptibles", "Infected", "Recovered",
+            "Births", "New infections", "Microcephaly", 
+            "Weekly new infections", "Weekly new microcephaly",
+            "Carrying capacity", "Extrinsic Incubation Period", 
+            "Adult mosquito daily mortality rate", expression("R"["0"] * ""), 
+            "FOI (within patches)")
+
 ls_total_1 <- out[plot_total]
 
 ls_total_2 <- out[plot_total_inc]
 
-plot_total_inc_lab <- paste0("w_", plot_total_inc)
+ls_mean <- out[plot_mean]
+
+to_plot_mean <- lapply(ls_mean, cbind_time, tt)
 
 names(ls_total_2) <- plot_total_inc_lab
 
@@ -172,26 +194,15 @@ to_plot_total_1$pS <- pS
 to_plot_total_1$pI1 <- pI1
 to_plot_total_1$pR1 <- pR1
 
-plot_total <- c("S", "I1", "R1", "Ntotal", "pS", "pI1", "pR1", "births", "inf_1", "MC")
-
 to_plot_total_1a <- to_plot_total_1[plot_total]
 
 to_plot_total_2 <- lapply(ls_total_2, cumsum_and_incidence_total, Ntotal)
 
-to_plot_total <- c(to_plot_total_1a, to_plot_total_2)
+to_plot_total <- c(to_plot_total_1a, to_plot_total_2, to_plot_mean)
 
-y_labels <- c("number", "number", "number", "number", "proportion", "proportion", 
-              "proportion", "number", "number", "number",
-              "weekly number/1000", "weekly number/1000")
+y_labels <- setNames(y_labels, c(plot_total_p, plot_total_inc_lab, plot_mean)) 
 
-y_labels <- setNames(y_labels, c(plot_total, plot_total_inc_lab)) 
-
-titles <- c("Susceptibles", "Infected", "Recovered", "Total",
-            "Susceptibles", "Infected", "Recovered",
-            "Births", "New infections", "Microcephaly", 
-            "Weekly new infections", "Weekly new microcephaly")
-
-titles <- setNames(titles, c(plot_total, plot_total_inc_lab))
+titles <- setNames(titles, c(plot_total_p, plot_total_inc_lab, plot_mean))
 
 all_plots_total <- imap(to_plot_total, 
                         ~ simple_plot(df = .x, 

@@ -1,54 +1,35 @@
 
-simple_plot <- function(df, y_lab_title, ttl = NULL, y_lim = NULL, break_interval = 5) {
+simple_plot <- function(df, 
+                        y_lab_title, 
+                        ttl = NULL, 
+                        parms) {
+  
+  max_x_lim <- parms$max_x_lim
+  brk_interval <- parms$break_interval # years
   
   max_time <- length(unique(df$time))
   
-  brks <- seq(from = 0, to = max_time, by = 364 * break_interval)
-  
-  if(is.null(y_lim)) {
+  if(!is.null(max_x_lim)) {
     
-    my_y_lim <- c(y_lim[1], y_lim[2])  
+    cartes_x_lim <- max_x_lim
     
   } else {
     
-    my_y_lim <- NULL
-    
+    cartes_x_lim <- max_time
+  
   }
+  
+  brks <- seq(from = 0, to = max_time, by = 364 * brk_interval)
   
   p <- ggplot(df) +
     geom_line(aes(x = time, y = value), colour = "#63B8FF") +
-    scale_y_continuous(name = y_lab_title, limits = my_y_lim, labels = scales::comma) +
-    scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-    theme_bw() +
-    theme(axis.text.x = element_text(size = 8),
-          axis.text.y = element_text(size = 8),
-          strip.text.x = element_text(size = 8))
-  
-  if(!is.null(ttl)) {
-    
-    p <- p + ggtitle(ttl)
-    
-  }
-  
-  p
-  
-}
-
-plot_by_line <- function(df, line_var, y_lab_title, ttl = NULL, leg_pos = NULL, break_interval = 5) {
-  
-  max_time <- length(unique(df$time))
-  
-  brks <- seq(from = 0, to = max_time, by = 364 * break_interval)
-  
-  p <- ggplot(df) +
-    geom_line(aes_string(x = "time", y = "value", colour = line_var)) +
     scale_y_continuous(name = y_lab_title, labels = scales::comma) +
     scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
     theme_bw() +
     theme(axis.text.x = element_text(size = 8),
           axis.text.y = element_text(size = 8),
-          strip.text.x = element_text(size = 8),
-          legend.position = "bottom")
+          strip.text.x = element_text(size = 8)) +
+    coord_cartesian(xlim = c(0, cartes_x_lim))
   
   if(!is.null(ttl)) {
     
@@ -56,21 +37,32 @@ plot_by_line <- function(df, line_var, y_lab_title, ttl = NULL, leg_pos = NULL, 
     
   }
   
-  if(!is.null(leg_pos)){
-    
-    p <- p + theme(legend.position = leg_pos)
-    
-  }
-    
   p
   
 }
 
-plot_by_facet <- function(df, facet_var, y_lab_title, ttl = NULL, break_interval = 5) {
+plot_by_facet <- function(df, 
+                          facet_var, 
+                          y_lab_title, 
+                          ttl = NULL, 
+                          parms) {
+  
+  max_x_lim <- parms$max_x_lim
+  brk_interval <- parms$break_interval # years
   
   max_time <- length(unique(df$time))
   
-  brks <- seq(from = 0, to = max_time, by = 364 * break_interval)
+  if(!is.null(max_x_lim)) {
+    
+    cartes_x_lim <- max_x_lim
+    
+  } else {
+    
+    cartes_x_lim <- max_time
+    
+  }
+  
+  brks <- seq(from = 0, to = max_time, by = 364 * brk_interval)
   
   p <- ggplot(df) +
     geom_line(aes(x = time, y = value), colour = "#63B8FF") +
@@ -80,7 +72,8 @@ plot_by_facet <- function(df, facet_var, y_lab_title, ttl = NULL, break_interval
     theme_bw() +
     theme(axis.text.x = element_text(size = 8),
           axis.text.y = element_text(size = 8),
-          strip.text.x = element_text(size = 8))
+          strip.text.x = element_text(size = 8)) +
+    coord_cartesian(xlim = c(0, cartes_x_lim))
   
   if(!is.null(ttl)) {
     
@@ -92,45 +85,93 @@ plot_by_facet <- function(df, facet_var, y_lab_title, ttl = NULL, break_interval
   
 }
 
-plot_by_line_facet <- function(df, line_var, facet_var, y_lab_title, ttl = NULL, y_lim = NULL, leg_pos = NULL, break_interval = 5) {
+plot_by_line <- function(df, 
+                         line_var, 
+                         y_lab_title, 
+                         ttl = NULL, 
+                         parms) {
+  
+  max_x_lim <- parms$max_x_lim
+  brk_interval <- parms$break_interval # years
   
   max_time <- length(unique(df$time))
   
-  brks <- seq(from = 0, to = max_time, by = 364 * break_interval)
-  
-  if(is.null(y_lim)) {
+  if(!is.null(max_x_lim)) {
     
-    my_y_lim <- c(y_lim[1], y_lim[2])  
+    cartes_x_lim <- max_x_lim
     
   } else {
     
-    my_y_lim <- NULL
+    cartes_x_lim <- max_time
     
   }
   
+  brks <- seq(from = 0, to = max_time, by = 364 * brk_interval)
+  
   p <- ggplot(df) +
     geom_line(aes_string(x = "time", y = "value", colour = line_var)) +
-    facet_wrap(facets = as.formula(paste("~", facet_var)), 
-               ncol = 1, 
-               scales = "free_y") +
-    scale_y_continuous(name = y_lab_title, limits = my_y_lim, labels = scales::comma) +
+    scale_y_continuous(name = y_lab_title, labels = scales::comma) +
     scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
     theme_bw() +
     theme(axis.text.x = element_text(size = 8),
           axis.text.y = element_text(size = 8),
           strip.text.x = element_text(size = 8),
-          legend.position = "bottom") + 
-    guides(colour = guide_legend(nrow = 1))
+          legend.position = "bottom") +
+    coord_cartesian(xlim = c(0, cartes_x_lim))
   
   if(!is.null(ttl)) {
     
     p <- p + ggtitle(ttl)
     
   }
+
+  p
   
-  if(!is.null(leg_pos)){
+}
+
+plot_by_line_facet <- function(df, 
+                               line_var, 
+                               facet_var, 
+                               y_lab_title, 
+                               ttl = NULL, 
+                               parms) {
+  
+  max_x_lim <- parms$max_x_lim
+  brk_interval <- parms$break_interval # years
+  line_sz <- parms$line_size
+  
+  max_time <- length(unique(df$time))
+  
+  if(!is.null(max_x_lim)) {
     
-    p <- p + theme(legend.position = leg_pos)
+    cartes_x_lim <- max_x_lim
+    
+  } else {
+    
+    cartes_x_lim <- max_time
+    
+  }
+
+  brks <- seq(from = 0, to = max_time, by = 364 * brk_interval)
+  
+  p <- ggplot(df) +
+    geom_line(aes_string(x = "time", y = "value", colour = line_var), size = line_sz) +
+    facet_wrap(facets = as.formula(paste("~", facet_var)), 
+               ncol = 1, 
+               scales = "free_y") +
+    scale_y_continuous(name = y_lab_title, labels = scales::comma) +
+    scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
+    theme_bw() +
+    theme(axis.text.x = element_text(size = 8),
+          axis.text.y = element_text(size = 8),
+          strip.text.x = element_text(size = 8),
+          legend.position = "bottom") + 
+    guides(colour = guide_legend(nrow = 1)) +
+    coord_cartesian(xlim = c(0, cartes_x_lim))
+  
+  if(!is.null(ttl)) {
+    
+    p <- p + ggtitle(ttl)
     
   }
   

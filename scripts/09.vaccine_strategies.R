@@ -18,13 +18,17 @@ source(file.path("R", "plot_layout.R"))
 # define parameters -----------------------------------------------------------
 
 
-my_id <- 5
+my_id <- 4
 
-exp_des_nm <- "experimental_design_2"
+exp_des_nm <- "experimental_design_1"
 
-vacc_coverage_values <- c(0, 0.5)
+vacc_coverage_values <- c(0, 0.5, 0.8, 1)
 
-prop_immune_values <- c(0, 0.25)
+prop_immune_values <- 0
+
+plot_parms <- list(max_x_lim = 5 * 364,
+                   break_interval = 0.5,
+                   line_size = 0.5)
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
 
@@ -46,11 +50,9 @@ my_dt <- 1
 
 mr_baseline <- 0.0002
 
-plot_interval <- 5 # years
-
 vacc_starttime <- 1.7  
 
-vacc_duration <- 3.5 # 0.16
+vacc_duration <- 1.5 # 0.16  
 
 # from 9 to 49
 vacc_ages <- c(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0) 
@@ -65,7 +67,7 @@ diagnostics_to_save <- c("inf_1", "Ntotal", "MC")
 
 experiment_name <- paste0("experiment_", my_id)
 
-experiment_path <- file.path("vaccine_strategies", experiment_name)
+experiment_path <- file.path("vaccine_strategies", experiment_name, "zoom")
 
 out_fig_dir <- file.path("figures", experiment_path)
 
@@ -78,7 +80,7 @@ plot_type <- c("total", "by_patch", "by_vaccine", "by_age")
 exp_des <- expand.grid(vacc_cov = vacc_coverage_values,
                        prop_immune = prop_immune_values)
 
-exp_des$id <- seq_len(nrow(exp_des)) + 4
+exp_des$id <- seq_len(nrow(exp_des))
 
 exp_des_one <- exp_des[exp_des$id == my_id,]
 
@@ -96,8 +98,7 @@ params <- list(DT = my_dt,
                vacc_child_coverage = vacc_child_cov,
                vacc_child_starttime = vacc_starttime,
                vacc_child_stoptime = vacc_stoptime,
-               other_prop_immune = prop_immune,
-               Mwt_mean = 1)
+               other_prop_immune = prop_immune)
 
 
 # load data -------------------------------------------------------------------
@@ -207,7 +208,8 @@ titles <- setNames(titles, c(plot_total_p, plot_total_inc_lab, plot_mean))
 all_plots_total <- imap(to_plot_total, 
                         ~ simple_plot(df = .x, 
                                       y_lab_title = y_labels[.y],
-                                      ttl = titles[.y]))
+                                      ttl = titles[.y],
+                                      parms = plot_parms))
 
 plots_total_combined <- arrangeGrob_multi_files(all_plots_total, n_plots_per_file = 4)
   
@@ -256,7 +258,8 @@ all_plots_patch <- imap(to_plot_patch,
                         ~ plot_by_facet(df = .x,
                                         facet_var = "patch", 
                                         y_lab_title = y_labels[.y],
-                                        ttl = titles[.y]))
+                                        ttl = titles[.y],
+                                        parms = plot_parms))
 
 
 # -----------------------------------------------------------------------------
@@ -297,7 +300,8 @@ all_plots_vaccine <- imap(to_plot_vaccine,
                           ~ plot_by_line(df = .x, 
                                          line_var = "vaccine",
                                          y_lab_title = y_labels[.y],
-                                         ttl = titles[.y]))
+                                         ttl = titles[.y],
+                                         parms = plot_parms))
 
 plots_vaccine_combined <- arrangeGrob_multi_files(all_plots_vaccine, 
                                                   n_plots_per_file = 4, 
@@ -343,7 +347,8 @@ all_plots_age <- imap(to_plot_age,
                                            line_var = "age", 
                                            facet_var = "vaccine",
                                            y_lab_title = y_labels[.y],
-                                           ttl = titles[.y]))
+                                           ttl = titles[.y],
+                                           parms = plot_parms))
 
 plots_age_combined <- arrangeGrob_multi_files(all_plots_age, 
                                               n_plots_per_file = 2,

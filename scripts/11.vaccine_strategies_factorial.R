@@ -54,7 +54,7 @@ if (CLUSTER) {
 # define parameters -----------------------------------------------------------
 
 
-experiment_no <- 4
+experiment_no <- 1
 
 experiment_name <- paste0("factorial_", experiment_no)
   
@@ -92,9 +92,9 @@ vacc_coverage_values <- c(0, 0.5, 0.8, 1)
 
 target_pop_values <- c(1, 2)
 
-duration_values <- c(0.16, time_years + 1)
+duration_values <- c(0.17, 1.5, 2)
 
-eff_values <- c(0.75, 1)
+eff_values <- 0.75
 
 prop_immune_values <- c(0, 0.25, 0.5)
 

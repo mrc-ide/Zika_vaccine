@@ -16,7 +16,7 @@ source(file.path("R", "pre_process.R"))
 # define parameters -----------------------------------------------------------
 
 
-experiment_no <- 5
+experiment_no <- 1
 
 copy_files <- TRUE 
 
@@ -24,15 +24,17 @@ experiment_name <- paste0("factorial_", experiment_no)
 
 experiment_path <- file.path("vaccine_strategies", experiment_name)
 
+data_path <- file.path("output", experiment_path)
+  
+out_fig_path <- file.path("figures", experiment_path)
+
 no_years <- 6
+
+duration_values <- c(0.16, 1.5, 2)
 
 tt <- seq.int(1, 364 * no_years, 1)
   
 ages_labels <- c("0_1", "2_10", "11_20", "21_30", "31_40", "41_50", "51_60", "61_70", "71_80", "81_90", "91_100") 
-
-data_path <- file.path("output", experiment_path)
-  
-out_fig_path <- file.path("figures", experiment_path)
 
 
 # load data -------------------------------------------------------------------
@@ -86,7 +88,7 @@ out_melt$target_pop <- factor(out_melt$target_pop,
 
 out_melt$duration <- factor(out_melt$duration, 
                             levels = unique(out_melt$duration),
-                            labels = c("2 months", ">3.5 years"))
+                            labels = c("2 months", "1.5 years", "2 years"))
 
 out_melt$vacc_cov <- factor(out_melt$vacc_cov, 
                             levels = unique(out_melt$vacc_cov),
@@ -112,9 +114,7 @@ labs_values <- list(seq(0,25,5), seq(0,0.003,0.001))
 
 vacc_starttime <- get_vacc_start_time(imm_values)
 
-vacc_starttime_all <- rep(vacc_starttime, each = 4)
-
-duration_values <- c(0.16, 51)
+vacc_starttime_all <- rep(vacc_starttime, each = 6)
 
 duration_values_all <- rep(rep(duration_values, each = 2), 3)
 
@@ -158,7 +158,7 @@ for (i in seq_along(measure_values)) {
                   alpha = 0.3) +
         geom_line(aes_string(x = "time", y = "value", colour = "vacc_cov")) +
         geom_vline(xintercept = v_s * 364, linetype = "dashed") +
-        facet_grid(facets = target_pop ~ duration) +
+        facet_grid(facets = duration ~ target_pop) +
         scale_colour_manual(name = "Vaccine coverage",
                             values = my_palette) +
         # scale_color_brewer(name = "Vaccine coverage",
@@ -184,11 +184,19 @@ for (i in seq_along(measure_values)) {
       
       message(my_index)
       
+      my_hgt <- 15
+      
+      if(length(duration_values) == 3) {
+        
+        my_hgt <- 20
+          
+      }
+      
       save_plot(plot_obj = p,
                 out_pth = out_fig_path,
                 out_fl_nm = sprintf("summary_factorial_%s_%s", mes, my_index),
                 wdt = 17,
-                hgt = 15)
+                hgt = my_hgt)
       
     }
     

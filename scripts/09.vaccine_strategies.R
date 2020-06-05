@@ -18,7 +18,7 @@ source(file.path("R", "plot_layout.R"))
 # define parameters -----------------------------------------------------------
 
 
-my_id <- 4
+my_id <- 2
 
 exp_des_nm <- "experimental_design_1"
 
@@ -26,8 +26,8 @@ vacc_coverage_values <- c(0, 0.5, 0.8, 1)
 
 prop_immune_values <- 0
 
-plot_parms <- list(max_x_lim = 5 * 364,
-                   break_interval = 0.5,
+plot_parms <- list(max_x_lim = 50 * 364,
+                   break_interval = 5,
                    line_size = 0.5)
 
 age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
@@ -84,7 +84,7 @@ exp_des$id <- seq_len(nrow(exp_des))
 
 exp_des_one <- exp_des[exp_des$id == my_id,]
 
-vacc_child_cov <- exp_des_one[, "vacc_cov"]
+vacc_cu_cov <- exp_des_one[, "vacc_cov"]
 
 prop_immune <- exp_des_one[, "prop_immune"]
 
@@ -95,9 +95,9 @@ its <- seq(0, integer_time_steps, 1)
 vacc_stoptime <- vacc_starttime + vacc_duration  
 
 params <- list(DT = my_dt,
-               vacc_child_coverage = vacc_child_cov,
-               vacc_child_starttime = vacc_starttime,
-               vacc_child_stoptime = vacc_stoptime,
+               vacc_cu_coverage = vacc_cu_cov,
+               vacc_cu_time = vacc_starttime,
+               vacc_cu_ages = vacc_ages,
                other_prop_immune = prop_immune)
 
 
@@ -117,7 +117,6 @@ create_generator <- create_r_model(odin_model_path = odin_model_path,
                                    death = deathrt,
                                    nn_links = nn_links,
                                    amplitudes_phases = amplitudes_phases,
-                                   vaccine_age = vacc_ages,
                                    params = params)
 
 gen <- create_generator$generator(user = create_generator$state)

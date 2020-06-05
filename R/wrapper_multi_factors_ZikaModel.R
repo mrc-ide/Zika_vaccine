@@ -9,17 +9,19 @@ wrapper_multi_factors_ZikaModel_2 <- function(x,
                                               birth_rates,
                                               mr_baseline) {
   
+  browser()
+  
   odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
   
   id <- x$id
-  vacc_child_cov <- x$vacc_cov
+  vacc_cu_cov <- x$vacc_cov
   target_pop <- x$target_pop
   vacc_duration <- x$duration
   vacc_eff <- x$efficacy
   prop_imm <- x$prop_imm
   
   message("ID = ", id)
-  message("coverage = ", vacc_child_cov)
+  message("coverage = ", vacc_cu_cov)
   message("target population = " , target_pop)
   message("duration = ", vacc_duration)
   message("efficacy = ", vacc_eff)
@@ -31,10 +33,10 @@ wrapper_multi_factors_ZikaModel_2 <- function(x,
 
   if(!is.null(parms)) {
     
-    vacc_stoptime <- parms$vacc_child_starttime + vacc_duration
-    
-    factorial_params <- list(vacc_child_coverage = vacc_child_cov,
-                             vacc_child_stoptime = vacc_stoptime,
+    factorial_params <- list(vacc_cu_coverage = vacc_cu_cov,
+                             vacc_cu_time = vacc_starttime,
+                             vacc_cu_minage = vacc_cu_minage,
+                             vacc_cu_maxage = vacc_cu_maxage,
                              vacceff_prim = vacc_eff,
                              other_prop_immune = prop_imm)
     
@@ -61,7 +63,7 @@ wrapper_multi_factors_ZikaModel_2 <- function(x,
                                                 death = death,
                                                 nn_links = nn_links,
                                                 amplitudes_phases,
-                                                vaccine_age = vaccine_ages,
+                                                #vaccine_age = vaccine_ages,
                                                 params = params)
   
   gen <- create_generator$generator(user = create_generator$state)

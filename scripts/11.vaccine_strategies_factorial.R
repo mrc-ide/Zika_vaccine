@@ -3,12 +3,11 @@
 
 options(didehpc.cluster = "fi--didemrchnb")
 
-CLUSTER <- TRUE
+CLUSTER <- FALSE
 
 my_resources <- c(file.path("R", "pre_process.R"),
                   file.path("R", "utility_functions.R"),
                   file.path("R", "calculate_MC_numbers.R"),
-                  file.path("R", "pre_process.R"),
                   file.path("R", "wrapper_multi_factors_ZikaModel.R"))
 
 my_pkgs <- "ZikaModel"
@@ -82,9 +81,9 @@ mr_baseline <- 0.0002
 
 plot_interval <- 5 # years
 
-# vacc_starttime <- 1.7  
+vacc_starttime <- 1.7  
 
-# fixed_params <- list(vacc_child_starttime = vacc_starttime)
+fixed_params <- list(vacc_cu_time = vacc_starttime)
 
 diagnostics_to_save <- c("inf_1", "Ntotal", "MC")
 
@@ -155,6 +154,7 @@ if (CLUSTER) {
     obj,
     agec = age_init,
     death = deathrt,
+    parms = fixed_params,
     integer_time_steps = its,
     var_save = diagnostics_to_save,
     out_dir = out_tab_dir,
@@ -169,6 +169,7 @@ if (CLUSTER) {
                        wrapper_multi_factors_ZikaModel_2,
                        agec = age_init,
                        death = deathrt,
+                       parms = fixed_params,
                        integer_time_steps = its,
                        var_save = diagnostics_to_save,
                        out_dir = out_tab_dir,

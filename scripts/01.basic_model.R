@@ -13,7 +13,7 @@ source(file.path("R", "utility_functions.R"))
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic_small_dt_2")
+out_dir <- file.path("figures", "deterministic")
 out_dir_2 <- file.path(out_dir, "patch")
 out_dir_3 <- file.path(out_dir, "vaccine")
 

@@ -1,11 +1,10 @@
 
-devtools::install_github("mrc-ide/ZikaModel")
+# devtools::install_github("mrc-ide/ZikaModel")
 
 library(ZikaModel)
-library(reshape2)
 library(ggplot2)
-library(viridis)
-library(gridExtra)
+library(patchwork)
+library(dplyr)
 
 source(file.path("R", "wrapper_to_save_plot.R"))
 source(file.path("R", "utility_functions.R"))
@@ -14,461 +13,336 @@ source(file.path("R", "utility_functions.R"))
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic_2")
+out_dir <- file.path("figures", "deterministic")
+out_dir_2 <- file.path(out_dir, "patch")
+out_dir_3 <- file.path(out_dir, "vaccine")
 
-age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
-
-deathrt <- c(1e-10,
-             1e-10,
-             1e-10,
-             0.00277068683332695,
-             0.0210680857689784,
-             0.026724997685722,
-             0.0525354529367476,
-             0.0668013582441452,
-             0.119271483740379,
-             0.279105747097929,
-             0.390197266957464)
-
-# number of years to run the simulation for
-time_years <- 50 # years
-
-# time step
-my_dt <- 1
-
-# number of model time steps
-time_frame <- (364 * time_years) / my_dt
+hgt <- 8
+wdt <- 13
+hgt_p <- 15
+wdt_p <- 18
+hgt_v <- 7
+wdt_v <- 15
 
 
 # run -------------------------------------------------------------------------
 
 
-# run the model
-out <- run_model(agec = age_init,
-                 death = deathrt,
-                 nn_links,
-                 amplitudes_phases,
-                 time = time_frame,
-                 season = TRUE)
+r1 <- run_deterministic_model(time_period = 365 * 5)
 
 
-# post processing -------------------------------------------------------------
+# plot totals -----------------------------------------------------------------
 
 
-out_2 <- post_processing(out, my_dt)
+## format
+Ntotal <- format_output_H(r1, var_select = "Ntotal")
+inf_1 <- format_output_H(r1, var_select = "inf_1")
+MC <- format_output_H(r1, var_select = "MC")
+inf_1_w <- format_output_H(r1, var_select = "inf_1_w")
+MC_w <- format_output_H(r1, var_select = "MC_w")
 
-p1 <- plot_compartments(out_2$compartments)
+Lwt <- format_output_M(r1, var_select = "Lwt")
+Kc <- format_output_M(r1, var_select = "Kc")
+eip <- format_output_M(r1, var_select = "eip")
+Delta <- format_output_M(r1, var_select = "Delta")
+Rt1 <- format_output_M(r1, var_select = "R0t_1")
+FOI1 <- format_output_M(r1, var_select = "FOI1")
 
-save_plot(plot_obj = p1,
+# plot
+humans_plot <- plot(r1, type = "H")
+mosquitoes_plot <- plot(r1, type = "M")
+
+Ntotal_plot <- ggplot(Ntotal, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Total number of humans") +
+  theme_bw()
+  
+inf_1_plot <- ggplot(inf_1, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily infections") +
+  theme_bw()
+
+MC_plot <- ggplot(MC, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Microcepahly cases") +
+  theme_bw()
+
+inf_1_w_plot <- ggplot(inf_1_w, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly infections/1000") +
+  theme_bw()
+
+MC_w_plot <- ggplot(MC_w, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly microcepahly cases/1000") +
+  theme_bw()
+
+extra_H_plot <- Ntotal_plot + inf_1_plot + MC_plot + inf_1_w_plot + MC_w_plot +
+  plot_layout(ncol = 2)
+  
+Lwt_plot <- ggplot(Lwt, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Larvae wild type") +
+  theme_bw()
+
+Kc_plot <- ggplot(Kc, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Mosquito larvae carrying capacity") +
+  theme_bw()
+
+eip_plot <- ggplot(eip, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Extrinsic Incubation Period") +
+  theme_bw()
+
+Delta_plot <- ggplot(Delta, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Adult mosquito daily mortality rate") +
+  theme_bw()
+
+Rt1_plot <- ggplot(Rt1, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Time-varying ZIKV reprodution number") +
+  theme_bw()
+
+FOI1_plot <- ggplot(FOI1, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Force of Infection") +
+  theme_bw()
+
+extra_M_plot <- Lwt_plot + Kc_plot + eip_plot + 
+                Delta_plot + Rt1_plot + FOI1_plot + plot_layout(ncol = 2)
+
+# save
+save_plot(plot_obj = humans_plot,
           out_pth = out_dir,
           out_fl_nm = "human_compartments",
-          wdt = 14,
-          hgt = 9)
+          wdt = wdt,
+          hgt = hgt)
 
-p2 <- plot_demographics(out_2$demographics)
-
-lapply(seq_along(p2),
-       wrapper_to_save_plot,
-       p2,
-       out_fl_nm = "human_demographics",
-       out_pth = out_dir,
-       wdt = 18,
-       hgt = 10)
-
-
-# extract mosquitoes diagnostics ----------------------------------------------
-
-
-mosquito_diagnostics <- post_processing_mos(out)
-
-p3 <- plot_demographics(mosquito_diagnostics)
-
-lapply(seq_along(p3),
-       wrapper_to_save_plot,
-       p3,
-       out_fl_nm = "mosquitoes_demographics",
-       out_pth = out_dir,
-       wdt = 18,
-       hgt = 10)
-
-
-# plot means ------------------------------------------------------------------
-
-
-p_all <- plot_Kc_eip_delta(out)
-
-save_plot(plot_obj = p_all,
+save_plot(plot_obj = mosquitoes_plot,
           out_pth = out_dir,
-          out_fl_nm = "mosquitoes_Kc_eip_delta",
+          out_fl_nm = "mosquitoes_compartments",
+          wdt = wdt,
+          hgt = hgt)
+
+save_plot(plot_obj = extra_H_plot,
+          out_pth = out_dir,
+          out_fl_nm = "extra_H_diagnostics",
+          wdt = 18,
+          hgt = 15)
+
+save_plot(plot_obj = extra_M_plot,
+          out_pth = out_dir,
+          out_fl_nm = "extra_M_diagnostics",
           wdt = 18,
           hgt = 15)
 
 
-
-# -----------------------------------------------------------------------------
-#
-# Plot diagnostics by patch
-#
-# -----------------------------------------------------------------------------
+# plot by patch ---------------------------------------------------------------
 
 
+# format 
+Ntotal_p <- format_output_H(r1, var_select = "Ntotal", keep = "patch")
+inf_1_p <- format_output_H(r1, var_select = "inf_1", keep = "patch")
+MC_p <- format_output_H(r1, var_select = "MC", keep = "patch")
+inf_1_w_p <- format_output_H(r1, var_select = "inf_1_w", keep = "patch")
+MC_w_p <- format_output_H(r1, var_select = "MC_w", keep = "patch")
 
-tt <- out$TIME
-time <- max(tt)
-brks <- seq(from = 0, to = time, by = 364 * 5)
+Lwt_p <- format_output_M(r1, var_select = "Lwt", keep = "patch")
+Kc_p <- format_output_M(r1, var_select = "Kc", keep = "patch")
+eip_p <- format_output_M(r1, var_select = "eip", keep = "patch")
+Delta_p <- format_output_M(r1, var_select = "Delta", keep = "patch")
+Rt1_p <- format_output_M(r1, var_select = "R0t_1", keep = "patch")
+FOI1_p <- format_output_M(r1, var_select = "FOI1", keep = "patch")
 
-out_dir_1 <- file.path(out_dir, "patch")
+# plot
+humans_p_plot <- plot(r1, type = "H", keep = "patch")
+mosquitoes_p_plot <- plot(r1, type = "M", keep = "patch")
 
-births_patch_df <- as.data.frame(out$births)
-names(births_patch_df) <- seq_len(21)
-births_patch_df$time <- tt
-births_patch_df_melt <- melt(births_patch_df,
-                             id.vars = "time",
-                             variable.name = "patch")
+Ntotal_p_plot <- ggplot(Ntotal_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Total number of humans") +
+  theme_bw()
 
-p <- ggplot(births_patch_df_melt) +
-  geom_line(aes(x = time, y = value), colour = "#63B8FF") +
-  ggplot2::facet_wrap(~ patch, ncol = 4) +
-  scale_y_continuous(name = "births") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir_1,
-          out_fl_nm = "births_by_patch.png",
-          wdt = 15,
-          hgt = 15)
+inf_1_p_plot <- ggplot(inf_1_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily infections") +
+  theme_bw()
 
-# sum across ages and vaccine status (dims 2 and 3)
-inf_1_patch <- apply(out$inf_1, c(1, 4), sum)
-inf_1_patch_df <- as.data.frame(inf_1_patch)
-names(inf_1_patch_df) <- seq_len(21)
-inf_1_patch_df$time <- tt
-inf_1_patch_df_melt <- melt(inf_1_patch_df,
-                            id.vars = "time",
-                            variable.name = "patch")
+MC_p_plot <- ggplot(MC_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Microcepahly cases") +
+  theme_bw()
 
-p <- ggplot(inf_1_patch_df_melt) +
-  geom_line(aes(x = time, y = value), colour = "#63B8FF") +
-  ggplot2::facet_wrap(~ patch, ncol = 4) +
-  scale_y_continuous(name = "inf_1") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir_1,
-          out_fl_nm = "inf_1_by_patch.png",
-          wdt = 15,
-          hgt = 15)
+inf_1_w_p_plot <- ggplot(inf_1_w_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly infections/1000") +
+  theme_bw()
 
-S_patch <- apply(out$S, c(1, 4), sum)
-S_patch_df <- as.data.frame(S_patch)
-names(S_patch_df) <- seq_len(21)
-S_patch_df$time <- tt
-S_patch_df_melt <- melt(S_patch_df,
-                        id.vars = "time",
-                        variable.name = "patch")
+MC_w_p_plot <- ggplot(MC_w_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly microcepahly cases/1000") +
+  theme_bw()
 
-p <- ggplot(S_patch_df_melt) +
-  geom_line(aes(x = time, y = value), colour = "#63B8FF") +
-  ggplot2::facet_wrap(~ patch, ncol = 4) +
-  scale_y_continuous(name = "S") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir_1,
-          out_fl_nm = "S_by_patch.png",
-          wdt = 15,
-          hgt = 15)
+Lwt_p_plot <- ggplot(Lwt_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Larvae wild type") +
+  theme_bw()
 
-I1_patch <- apply(out$I1, c(1, 4), sum)
-I1_patch_df <- as.data.frame(I1_patch)
-names(I1_patch_df) <- seq_len(21)
-I1_patch_df$time <- tt
-I1_patch_df_melt <- melt(I1_patch_df,
-                         id.vars = "time",
-                         variable.name = "patch")
+Kc_p_plot <- ggplot(Kc_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Kc") +
+  ggtitle("Mosquito larvae carrying capacity") +
+  theme_bw()
 
-p <- ggplot(I1_patch_df_melt) +
-  geom_line(aes(x = time, y = value), colour = "#63B8FF") +
-  ggplot2::facet_wrap(~ patch, ncol = 4) +
-  scale_y_continuous(name = "I1") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir_1,
-          out_fl_nm = "I1_by_patch.png",
-          wdt = 15,
-          hgt = 15)
+eip_p_plot <- ggplot(eip_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("EIP") +
+  ggtitle("Extrinsic Incubation Period") +
+  theme_bw()
 
-R1_patch <- apply(out$R1, c(1, 4), sum)
-R1_patch_df <- as.data.frame(R1_patch)
-names(R1_patch_df) <- seq_len(21)
-R1_patch_df$time <- tt
-R1_patch_df_melt <- melt(R1_patch_df,
-                         id.vars = "time",
-                         variable.name = "patch")
+Delta_p_plot <- ggplot(Delta_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Delta") +
+  ggtitle("Adult mosquito daily mortality rate") +
+  theme_bw()
 
-p <- ggplot(R1_patch_df_melt) +
-  geom_line(aes(x = time, y = value), colour = "#63B8FF") +
-  ggplot2::facet_wrap(~ patch, ncol = 4) +
-  scale_y_continuous(name = "R1") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir_1,
-          out_fl_nm = "R1_by_patch.png",
-          wdt = 15,
-          hgt = 15)
+Rt1_p_plot <- ggplot(Rt1_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Rt") +
+  ggtitle("Time-varying ZIKV reprodution number") +
+  theme_bw()
 
-FOI1p_patch_df <- as.data.frame(out$FOI1p)
-names(FOI1p_patch_df) <- seq_len(21)
-FOI1p_patch_df$time <- tt
-FOI1p_patch_df_melt <- melt(FOI1p_patch_df,
-                            id.vars = "time",
-                            variable.name = "patch")
+FOI1_p_plot <- ggplot(FOI1_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("FOI") +
+  ggtitle("Force of Infection") +
+  theme_bw()
 
-p <- ggplot(FOI1p_patch_df_melt) +
-  geom_line(aes(x = time, y = value), colour = "#63B8FF") +
-  ggplot2::facet_wrap(~ patch, ncol = 4) +
-  scale_y_continuous(name = "FOI1p") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir_1,
-          out_fl_nm = "FOI1p_by_patch.png",
-          wdt = 15,
-          hgt = 15)
+# save
+save_plot(humans_p_plot, out_dir_2, "human_compartments", wdt = wdt_p, hgt = hgt_p)
+save_plot(mosquitoes_p_plot, out_dir_2, "mosquitoes_compartments", wdt = wdt_p, hgt = hgt_p)
+save_plot(Ntotal_p_plot, out_dir_2, "Ntotal", wdt = wdt_p, hgt = hgt_p)
+save_plot(inf_1_p_plot, out_dir_2, "inf_1", wdt = wdt_p, hgt = hgt_p)
+save_plot(MC_p_plot, out_dir_2, "MC", wdt = wdt_p, hgt = hgt_p)
+save_plot(inf_1_w_p_plot, out_dir_2, "inf_1_w", wdt = wdt_p, hgt = hgt_p)
+save_plot(MC_w_p_plot, out_dir_2, "MC_w", wdt = wdt_p, hgt = hgt_p)
+save_plot(Lwt_p_plot, out_dir_2, "Lwt", wdt = wdt_p, hgt = hgt_p)
+save_plot(Kc_p_plot, out_dir_2, "Kc", wdt = wdt_p, hgt = hgt_p)
+save_plot(eip_p_plot, out_dir_2, "eip", wdt = wdt_p, hgt = hgt_p)
+save_plot(Delta_p_plot, out_dir_2, "Delta", wdt = wdt_p, hgt = hgt_p)
+save_plot(Rt1_p_plot, out_dir_2, "Rt", wdt = wdt_p, hgt = hgt_p)
+save_plot(FOI1_p_plot, out_dir_2, "FOI", wdt = wdt_p, hgt = hgt_p)
 
 
-# -----------------------------------------------------------------------------
-#
-# Plot diagnostics by age group
-#
-# -----------------------------------------------------------------------------
+# plot by vaccine status ------------------------------------------------------
 
 
-out_dir_2 <- file.path(out_dir, "age")
+# format 
+Ntotal_v <- format_output_H(r1, var_select = "Ntotal", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+inf_1_v <- format_output_H(r1, var_select = "inf_1", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+MC_v <- format_output_H(r1, var_select = "MC", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+inf_1_w_v <- format_output_H(r1, var_select = "inf_1_w", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+MC_w_v <- format_output_H(r1, var_select = "MC_w", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
 
-deathrt_age_df <- as.data.frame(out$deathrt)
-names(deathrt_age_df) <- seq_len(11)
-deathrt_age_df$time <- tt
-deathrt_age_df_melt <- melt(deathrt_age_df,
-                            id.vars = "time",
-                            variable.name = "age")
+# plot
+humans_v_plot <- plot(r1, type = "H", keep = "vaccine")
 
-p <- ggplot(deathrt_age_df_melt) +
-  geom_line(aes(x = time, y = value), colour = "#63B8FF") +
-  ggplot2::facet_wrap(~ age, ncol = 4#,
-                      # scales = "free_y"
-  ) +
-  scale_y_continuous(name = "deathrt") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8)) +
-  ggplot2::coord_cartesian(ylim=c(0,.004))
-save_plot(p,
-          out_dir_2,
-          out_fl_nm = "deathrt_by_age.png",
-          wdt = 15,
-          hgt = 15)
+Ntotal_v_plot <- ggplot(Ntotal_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Total number of humans") +
+  theme_bw()
 
-agert_age_df <- as.data.frame(out$agert)
-names(agert_age_df) <- seq_len(11)
-agert_age_df$time <- tt
-agert_age_df_melt <- melt(agert_age_df,
-                          id.vars = "time",
-                          variable.name = "age")
+inf_1_v_plot <- ggplot(inf_1_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily infections") +
+  theme_bw()
 
-p <- ggplot(agert_age_df_melt) +
-  geom_line(aes(x = time, y = value), colour = "#63B8FF") +
-  ggplot2::facet_wrap(~ age, ncol = 4, scales = "free_y") +
-  scale_y_continuous(name = "agert") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir_2,
-          out_fl_nm = "agert_by_age.png",
-          wdt = 15,
-          hgt = 15)
+MC_v_plot <- ggplot(MC_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Microcepahly cases") +
+  theme_bw()
 
+inf_1_w_v_plot <- ggplot(inf_1_w_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly infections/1000") +
+  theme_bw()
 
+MC_w_v_plot <- ggplot(MC_w_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly microcepahly cases/1000") +
+  theme_bw()
 
-# -----------------------------------------------------------------------------
-#
-# Plot diagnostics by patch, age group and vaccine status
-#
-# -----------------------------------------------------------------------------
+extra_H_plot <- Ntotal_v_plot + inf_1_v_plot + MC_v_plot + inf_1_w_v_plot + 
+                MC_w_v_plot + plot_layout(ncol = 2, guides = "collect")
 
+# save
+save_plot(humans_v_plot, out_dir_3, "human_compartments", wdt = wdt_v, hgt = hgt_v)
+save_plot(extra_H_plot, out_dir_3, "extra_H_diagnostics", wdt = 18, hgt = 15)
 
-
-O_S_prob_full_melt <- melt(out$O_S_prob)
-names(O_S_prob_full_melt) <- c("time", "age", "vaccine", "patch", "value")
-no_age <- length(unique(O_S_prob_full_melt$age))
-no_vaccine <- length(unique(O_S_prob_full_melt$vaccine))
-no_patch <- length(unique(O_S_prob_full_melt$patch))
-combs <- no_age * no_vaccine * no_patch
-tt_long <- rep(tt, combs)
-O_S_prob_full_melt$time <- tt_long
-O_S_prob_full_melt$age <- factor(O_S_prob_full_melt$age,
-                                 levels = unique(O_S_prob_full_melt$age),
-                                 labels = unique(O_S_prob_full_melt$age))
-
-O_S_prob_melt <- subset(O_S_prob_full_melt, vaccine == 1 & patch == 1)
-
-p <- ggplot(O_S_prob_melt) +
-  geom_line(aes(x = time, y = value, colour = age)) +
-  scale_fill_viridis() +
-  scale_y_continuous(name = "O_S_prob") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir,
-          out_fl_nm = sprintf("O_S_prob_vaccine_%s_patch_%s.png", 1, 1),
-          wdt = 10,
-          hgt = 8)
-
-
-S_full_melt <- melt(out$S)
-names(S_full_melt) <- c("time", "age", "vaccine", "patch", "value")
-S_full_melt$time <- tt_long
-S_full_melt$age <- factor(S_full_melt$age,
-                          levels = unique(S_full_melt$age),
-                          labels = unique(S_full_melt$age))
-
-S_melt <- subset(S_full_melt, vaccine == 1 & patch == 1)
-
-p <- ggplot(S_melt) +
-  geom_line(aes(x = time, y = value, colour = age)) +
-  scale_fill_viridis() +
-  scale_y_continuous(name = "S", breaks = seq(0,6e+6,1e+6), labels = seq(0,6e+6,1e+6), limits = c(0,6e+6)) +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir,
-          out_fl_nm = sprintf("S_vaccine_%s_patch_%s.png", 1, 1),
-          wdt = 10,
-          hgt = 8)
-
-I1_full_melt <- melt(out$I1)
-names(I1_full_melt) <- c("time", "age", "vaccine", "patch", "value")
-I1_full_melt$time <- tt_long
-I1_full_melt$age <- factor(I1_full_melt$age,
-                           levels = unique(I1_full_melt$age),
-                           labels = unique(I1_full_melt$age))
-
-I1_melt <- subset(I1_full_melt, vaccine == 1 & patch == 1)
-
-p <- ggplot(I1_melt) +
-  geom_line(aes(x = time, y = value, colour = age)) +
-  scale_fill_viridis() +
-  scale_y_continuous(name = "I1", breaks = seq(0,1.4e+6,2e+5), labels = seq(0,1.4e+6,2e+5), limits = c(0,1.4e+6)) +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir,
-          out_fl_nm = sprintf("I1_vaccine_%s_patch_%s.png", 1, 1),
-          wdt = 10,
-          hgt = 8)
-
-O_S_full_melt <- melt(out$O_S)
-names(O_S_full_melt) <- c("time", "age", "vaccine", "patch", "value")
-O_S_full_melt$time <- tt_long
-O_S_full_melt$age <- factor(O_S_full_melt$age,
-                            levels = unique(O_S_full_melt$age),
-                            labels = unique(O_S_full_melt$age))
-
-O_S_melt <- subset(O_S_full_melt, vaccine == 1 & patch == 1)
-
-p <- ggplot(O_S_melt) +
-  geom_line(aes(x = time, y = value, colour = age)) +
-  scale_fill_viridis() +
-  scale_y_continuous(name = "O_S") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir,
-          out_fl_nm = sprintf("O_S_vaccine_%s_patch_%s.png", 1, 1),
-          wdt = 10,
-          hgt = 8)
-
-inf_1_full_melt <- melt(out$inf_1)
-names(inf_1_full_melt) <- c("time", "age", "vaccine", "patch", "value")
-inf_1_full_melt$time <- tt_long
-inf_1_full_melt$age <- factor(inf_1_full_melt$age,
-                              levels = unique(inf_1_full_melt$age),
-                              labels = unique(inf_1_full_melt$age))
-
-inf_1_melt <- subset(inf_1_full_melt, vaccine == 1 & patch == 1)
-
-p <- ggplot(inf_1_melt) +
-  geom_line(aes(x = time, y = value, colour = age)) +
-  scale_fill_viridis() +
-  scale_y_continuous(name = "inf_1", breaks = seq(0,7.5e+4,1.5e+4), labels = seq(0,7.5e+4,1.5e+4), limits = c(0,7.5e+4)) +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir,
-          out_fl_nm = sprintf("inf_1_vaccine_%s_patch_%s.png", 1, 1),
-          wdt = 10,
-          hgt = 8)
-
-inf_1_prob_full_melt <- melt(out$inf_1_prob)
-names(inf_1_prob_full_melt) <- c("time", "age", "vaccine", "patch", "value")
-inf_1_prob_full_melt$time <- tt_long
-inf_1_prob_full_melt$age <- factor(inf_1_prob_full_melt$age,
-                              levels = unique(inf_1_prob_full_melt$age),
-                              labels = unique(inf_1_prob_full_melt$age))
-
-inf_1_prob_melt <- subset(inf_1_prob_full_melt, vaccine == 1 & patch == 1)
-
-p <- ggplot(inf_1_prob_melt) +
-  geom_line(aes(x = time, y = value, colour = age)) +
-  scale_fill_viridis() +
-  scale_y_continuous(name = "inf_1_prob") +
-  scale_x_continuous(name = "Years", breaks = brks, labels = brks / 364) +
-  theme_bw() +
-  theme(axis.text.x = element_text(size = 8),
-        axis.text.y = element_text(size = 8),
-        strip.text.x = element_text(size = 8))
-save_plot(p,
-          out_dir,
-          out_fl_nm = sprintf("inf_1_prob_vaccine_%s_patch_%s.png", 1, 1),
-          wdt = 10,
-          hgt = 8)

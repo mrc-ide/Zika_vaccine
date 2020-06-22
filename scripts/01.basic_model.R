@@ -13,7 +13,7 @@ source(file.path("R", "utility_functions.R"))
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic")
+out_dir <- file.path("figures", "deterministic_small_dt_2")
 out_dir_2 <- file.path(out_dir, "patch")
 out_dir_3 <- file.path(out_dir, "vaccine")
 
@@ -70,7 +70,7 @@ MC_plot <- ggplot(MC, aes(x = t, y = y)) +
   geom_line(color = 'royalblue', size = 0.5) +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
-  ggtitle("Microcepahly cases") +
+  ggtitle("Daily microcepahly cases") +
   theme_bw()
 
 inf_1_w_plot <- ggplot(inf_1_w, aes(x = t, y = y)) +
@@ -203,7 +203,7 @@ MC_p_plot <- ggplot(MC_p, aes(x = t, y = y)) +
   facet_wrap(~ patch) +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
-  ggtitle("Microcepahly cases") +
+  ggtitle("Daily microcepahly cases") +
   theme_bw()
 
 inf_1_w_p_plot <- ggplot(inf_1_w_p, aes(x = t, y = y)) +
@@ -322,7 +322,7 @@ MC_v_plot <- ggplot(MC_v, aes(x = t, y = y, col = vaccine)) +
   geom_line(size = 0.5) +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
-  ggtitle("Microcepahly cases") +
+  ggtitle("Daily microcepahly cases") +
   theme_bw()
 
 inf_1_w_v_plot <- ggplot(inf_1_w_v, aes(x = t, y = y, col = vaccine)) +

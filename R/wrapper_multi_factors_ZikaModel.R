@@ -90,14 +90,7 @@ wrapper_multi_factors_ZikaModel_2 <- function(x,
   
 }
 
-wrapper_multi_factors_ZikaModel <- function(x,
-                                            agec,
-                                            death,
-                                            my_dt,
-                                            time_years,
-                                            season) {
-
-  odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
+wrapper_multi_factors_ZikaModel <- function(x, time_period) {
 
   Wb_starttime <- x$Wb_starttime
   Wb_introduration <- x$Wb_introduration
@@ -110,29 +103,15 @@ wrapper_multi_factors_ZikaModel <- function(x,
   message("Wb_introduration = " , Wb_introduration)
   message("Wb_introlevel = ", Wb_introlevel)
   message("----------------------------------------------------------")
-
-
-  create_generator <- ZikaModel::create_r_model(odin_model_path = odin_model_path,
-                                                agec = agec,
-                                                death = death,
-                                                nn_links = nn_links,
-                                                amplitudes_phases,
-                                                DT = my_dt,
-                                                season = season,
-                                                Wb_starttime = Wb_starttime,
-                                                Wb_introduration = Wb_introduration,
-                                                Wb_introlevel = Wb_introlevel)
-
-  gen <- create_generator$generator(user = create_generator$state)
-
-  integer_time_steps <- (364 * time_years) / my_dt
-
-  its <- seq(0, integer_time_steps, 1)
-
-  mod_run <- gen$run(its)
-
-  out <- gen$transform_variables(mod_run)
-
-  out$prop_wb
+  
+  
+  r1 <- run_deterministic_model(time_period = time_period,
+                                Wb_starttime = Wb_starttime,
+                                Wb_introduration = Wb_introduration,
+                                Wb_introlevel = Wb_introlevel)
+  
+  prop_wb <- format_output_Mprop(r1) 
+  
+  prop_wb
 
 }

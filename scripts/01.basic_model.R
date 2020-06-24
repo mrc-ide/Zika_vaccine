@@ -6,7 +6,6 @@ library(ggplot2)
 library(patchwork)
 library(dplyr)
 
-source(file.path("R", "wrapper_to_save_plot.R"))
 source(file.path("R", "utility_functions.R"))
 
 

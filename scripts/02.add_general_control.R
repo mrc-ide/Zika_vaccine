@@ -2,210 +2,347 @@
 devtools::install_github("mrc-ide/ZikaModel")
 
 library(ZikaModel)
-library(reshape2)
 library(ggplot2)
-library(gridExtra)
+library(patchwork)
+library(dplyr)
 
-source(file.path("R", "save_plot.R"))
-source(file.path("R", "wrapper_to_save_plot.R"))
-source(file.path("R", "reshape.R"))
+source(file.path("R", "utility_functions.R"))
 
 
 # define parameters -----------------------------------------------------------
 
 
-out_dir <- file.path("figures", "deterministic_control_noseason")
+out_dir <- file.path("figures", "deterministic_generalControl")
+out_dir_2 <- file.path(out_dir, "patch")
+out_dir_3 <- file.path(out_dir, "vaccine")
 
-agec <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
-
-death <- c(1e-10,
-           1e-10,
-           1e-10,
-           0.00277068683332695,
-           0.0210680857689784,
-           0.026724997685722,
-           0.0525354529367476,
-           0.0668013582441452,
-           0.119271483740379,
-           0.279105747097929,
-           0.390197266957464)
-
-time_years <- 50 # years
-
-my_dt <- 1
-
-odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
-
-propMwtControl <- 0.2
+hgt <- 8
+wdt <- 13
+hgt_p <- 15
+wdt_p <- 18
+hgt_v <- 7
+wdt_v <- 15
 
 
 # run -------------------------------------------------------------------------
 
 
-create_generator <- create_r_model(odin_model_path = odin_model_path,
-                                   agec = agec,
-                                   death = death,
-                                   nn_links = nn_links,
-                                   amplitudes_phases = amplitudes_phases,
-                                   DT = my_dt,
-                                   season = FALSE,
-                                   propMwtControl = propMwtControl)
-
-gen <- create_generator$generator(user = create_generator$state)
-
-integer_time_steps <- (364 * time_years) / my_dt
-
-its <- seq(0, integer_time_steps, 1)
-
-mod_run <- gen$run(its)
+r1 <- run_deterministic_model(time_period = 365 * 5,
+                              propMwtControl = 0.2)
 
 
-# post processing -------------------------------------------------------------
+# plot totals -----------------------------------------------------------------
 
 
-out <- gen$transform_variables(mod_run)
+## format
+Ntotal <- format_output_H(r1, var_select = "Ntotal")
+inf_1 <- format_output_H(r1, var_select = "inf_1")
+MC <- format_output_H(r1, var_select = "MC")
+inf_1_w <- format_output_H(r1, var_select = "inf_1_w")
+MC_w <- format_output_H(r1, var_select = "MC_w")
 
-out_2 <- post_processing(out, my_dt)
+Lwt <- format_output_M(r1, var_select = "Lwt")
+Kc <- format_output_M(r1, var_select = "Kc")
+eip <- format_output_M(r1, var_select = "eip")
+Delta <- format_output_M(r1, var_select = "Delta")
+Rt1 <- format_output_M(r1, var_select = "R0t_1")
+FOI1 <- format_output_M(r1, var_select = "FOI1")
 
-p1 <- plot_compartments(out_2$compartments)
+# plot
+humans_plot <- plot(r1, type = "H")
+mosquitoes_plot <- plot(r1, type = "M")
 
-save_plot(plot_obj = p1,
+Ntotal_plot <- ggplot(Ntotal, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Total number of humans") +
+  theme_bw()
+
+inf_1_plot <- ggplot(inf_1, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily infections") +
+  theme_bw()
+
+MC_plot <- ggplot(MC, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily microcepahly cases") +
+  theme_bw()
+
+inf_1_w_plot <- ggplot(inf_1_w, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly infections/1000") +
+  theme_bw()
+
+MC_w_plot <- ggplot(MC_w, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly microcepahly cases/1000") +
+  theme_bw()
+
+extra_H_plot <- Ntotal_plot + inf_1_plot + MC_plot + inf_1_w_plot + MC_w_plot +
+  plot_layout(ncol = 2)
+
+Lwt_plot <- ggplot(Lwt, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Larvae wild type") +
+  theme_bw()
+
+Kc_plot <- ggplot(Kc, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Mosquito larvae carrying capacity") +
+  theme_bw()
+
+eip_plot <- ggplot(eip, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Extrinsic Incubation Period") +
+  theme_bw()
+
+Delta_plot <- ggplot(Delta, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Adult mosquito daily mortality rate") +
+  theme_bw()
+
+Rt1_plot <- ggplot(Rt1, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Time-varying ZIKV reprodution number") +
+  theme_bw()
+
+FOI1_plot <- ggplot(FOI1, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Force of Infection") +
+  theme_bw()
+
+extra_M_plot <- Lwt_plot + Kc_plot + eip_plot + 
+  Delta_plot + Rt1_plot + FOI1_plot + plot_layout(ncol = 2)
+
+# save
+save_plot(plot_obj = humans_plot,
           out_pth = out_dir,
-          out_fl_nm = "human_compartments.png",
-          wdt = 14,
-          hgt = 9)
+          out_fl_nm = "human_compartments",
+          wdt = wdt,
+          hgt = hgt)
 
-p2 <- plot_demographics(out_2$demographics)
+save_plot(plot_obj = mosquitoes_plot,
+          out_pth = out_dir,
+          out_fl_nm = "mosquitoes_compartments",
+          wdt = wdt,
+          hgt = hgt)
 
-lapply(seq_along(p2),
-       wrapper_to_save_plot,
-       p2,
-       out_fl_nm = "human_demographics",
-       out_pth = out_dir,
-       wdt = 18,
-       hgt = 10)
+save_plot(plot_obj = extra_H_plot,
+          out_pth = out_dir,
+          out_fl_nm = "extra_H_diagnostics",
+          wdt = 18,
+          hgt = 15)
 
-
-# extract mosquitoes diagnostics ----------------------------------------------
-
-
-diagno_mos_wt <- c("Lwt", "Mwt_S", "Mwt_E1", "Mwt_E2", "Mwt_I1", "Mwt_tot", "Lwt_birth",
-                   "Lwt_mature", "Mwt_inf1")
-
-diagno_mos_wb <- c("Lwb", "Mwb_S", "Mwb_E1", "Mwb_E2", "Mwb_I1", "Mwb_tot", "Lwb_birth",
-                   "Lwb_mature", "Mwb_inf1", "Mwb_intro")
-
-diagno_mos <- c(diagno_mos_wt, diagno_mos_wb)
-
-dia_mos <- setNames(out[diagno_mos], diagno_mos)
-
-mossum <- lapply(dia_mos, function(x){apply(x, 1, sum)})
-
-mat_M <- do.call("cbind", mossum)
-
-df_M <- as.data.frame(mat_M)
-
-tt <- out$TIME
-time <- max(tt)
-
-df_M$time <- tt
-df_M_melt <- melt(df_M,
-                  id.vars = "time",
-                  variable.name = "diagnostic")
-
-diagno_levs <- c(diagno_mos_wt, diagno_mos_wb)
-
-df_M_melt$diagnostic <- factor(df_M_melt$diagnostic, levels = diagno_levs, labels = diagno_levs)
-
-p3 <- plot_demographics(df_M_melt)
-
-lapply(seq_along(p3),
-       wrapper_to_save_plot,
-       p3,
-       out_fl_nm = "mosquitoes_demographics",
-       out_pth = out_dir,
-       wdt = 18,
-       hgt = 10)
+save_plot(plot_obj = extra_M_plot,
+          out_pth = out_dir,
+          out_fl_nm = "extra_M_diagnostics",
+          wdt = 18,
+          hgt = 15)
 
 
-# plot means ------------------------------------------------------------------
+# plot by patch ---------------------------------------------------------------
 
 
-p_all <- plot_Kc_eip_delta(mod_run)
-  
-ggsave(filename = file.path(out_dir, "mosquitoes_Kc_eip_delta.png"), 
-       plot = p_all, width = 18, height = 15, units = "cm", dpi = 300)
+# format 
+Ntotal_p <- format_output_H(r1, var_select = "Ntotal", keep = "patch")
+inf_1_p <- format_output_H(r1, var_select = "inf_1", keep = "patch")
+MC_p <- format_output_H(r1, var_select = "MC", keep = "patch")
+inf_1_w_p <- format_output_H(r1, var_select = "inf_1_w", keep = "patch")
+MC_w_p <- format_output_H(r1, var_select = "MC_w", keep = "patch")
+
+Lwt_p <- format_output_M(r1, var_select = "Lwt", keep = "patch")
+Kc_p <- format_output_M(r1, var_select = "Kc", keep = "patch")
+eip_p <- format_output_M(r1, var_select = "eip", keep = "patch")
+Delta_p <- format_output_M(r1, var_select = "Delta", keep = "patch")
+Rt1_p <- format_output_M(r1, var_select = "R0t_1", keep = "patch")
+FOI1_p <- format_output_M(r1, var_select = "FOI1", keep = "patch")
+
+# plot
+humans_p_plot <- plot(r1, type = "H", keep = "patch")
+mosquitoes_p_plot <- plot(r1, type = "M", keep = "patch")
+
+Ntotal_p_plot <- ggplot(Ntotal_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Total number of humans") +
+  theme_bw()
+
+inf_1_p_plot <- ggplot(inf_1_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily infections") +
+  theme_bw()
+
+MC_p_plot <- ggplot(MC_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily microcepahly cases") +
+  theme_bw()
+
+inf_1_w_p_plot <- ggplot(inf_1_w_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly infections/1000") +
+  theme_bw()
+
+MC_w_p_plot <- ggplot(MC_w_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly microcepahly cases/1000") +
+  theme_bw()
+
+Lwt_p_plot <- ggplot(Lwt_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Larvae wild type") +
+  theme_bw()
+
+Kc_p_plot <- ggplot(Kc_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Kc") +
+  ggtitle("Mosquito larvae carrying capacity") +
+  theme_bw()
+
+eip_p_plot <- ggplot(eip_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("EIP") +
+  ggtitle("Extrinsic Incubation Period") +
+  theme_bw()
+
+Delta_p_plot <- ggplot(Delta_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Delta") +
+  ggtitle("Adult mosquito daily mortality rate") +
+  theme_bw()
+
+Rt1_p_plot <- ggplot(Rt1_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Rt") +
+  ggtitle("Time-varying ZIKV reprodution number") +
+  theme_bw()
+
+FOI1_p_plot <- ggplot(FOI1_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("FOI") +
+  ggtitle("Force of Infection") +
+  theme_bw()
+
+# save
+save_plot(humans_p_plot, out_dir_2, "human_compartments", wdt = wdt_p, hgt = hgt_p)
+save_plot(mosquitoes_p_plot, out_dir_2, "mosquitoes_compartments", wdt = wdt_p, hgt = hgt_p)
+save_plot(Ntotal_p_plot, out_dir_2, "Ntotal", wdt = wdt_p, hgt = hgt_p)
+save_plot(inf_1_p_plot, out_dir_2, "inf_1", wdt = wdt_p, hgt = hgt_p)
+save_plot(MC_p_plot, out_dir_2, "MC", wdt = wdt_p, hgt = hgt_p)
+save_plot(inf_1_w_p_plot, out_dir_2, "inf_1_w", wdt = wdt_p, hgt = hgt_p)
+save_plot(MC_w_p_plot, out_dir_2, "MC_w", wdt = wdt_p, hgt = hgt_p)
+save_plot(Lwt_p_plot, out_dir_2, "Lwt", wdt = wdt_p, hgt = hgt_p)
+save_plot(Kc_p_plot, out_dir_2, "Kc", wdt = wdt_p, hgt = hgt_p)
+save_plot(eip_p_plot, out_dir_2, "eip", wdt = wdt_p, hgt = hgt_p)
+save_plot(Delta_p_plot, out_dir_2, "Delta", wdt = wdt_p, hgt = hgt_p)
+save_plot(Rt1_p_plot, out_dir_2, "Rt", wdt = wdt_p, hgt = hgt_p)
+save_plot(FOI1_p_plot, out_dir_2, "FOI", wdt = wdt_p, hgt = hgt_p)
 
 
-
-# -----------------------------------------------------------------------------
-#
-# Plot mosquitoes diagnostics by patch
-#
-# -----------------------------------------------------------------------------
+# plot by vaccine status ------------------------------------------------------
 
 
+# format 
+Ntotal_v <- format_output_H(r1, var_select = "Ntotal", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+inf_1_v <- format_output_H(r1, var_select = "inf_1", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+MC_v <- format_output_H(r1, var_select = "MC", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+inf_1_w_v <- format_output_H(r1, var_select = "inf_1_w", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+MC_w_v <- format_output_H(r1, var_select = "MC_w", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
 
-out_dir_1 <- file.path(out_dir, "patch")
+# plot
+humans_v_plot <- plot(r1, type = "H", keep = "vaccine")
 
-my_breaks_2 <- seq(from = 0, to = time, by = 364 * 10)
+Ntotal_v_plot <- ggplot(Ntotal_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Total number of humans") +
+  theme_bw()
 
-diagno_mos_reshaped <- lapply(diagno_mos, reshape_by_patch, out)
+inf_1_v_plot <- ggplot(inf_1_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily infections") +
+  theme_bw()
 
-for (i in seq_along(diagno_mos_reshaped)) {
-  
-  one_dat <- diagno_mos_reshaped[[i]]
-  
-  one_ggttl <- diagno_mos[i]
-  
-  one_plot <- ggplot(data = one_dat, aes(x = x, y = y)) +
-    geom_line(color = 'royalblue', size = 0.5) +
-    facet_wrap(~ patch) +
-    scale_x_continuous("Years", breaks = my_breaks_2, labels = my_breaks_2/364) +
-    scale_y_continuous("") +
-    ggtitle(one_ggttl) +
-    theme_bw(base_size = 10)
-  
-  out_fl_nm <- paste0(one_ggttl, ".png")
-  
-  save_plot(plot_obj = one_plot, out_pth = out_dir_1, 
-            out_fl_nm = out_fl_nm, wdt = 18, hgt = 15)
-  
-}
+MC_v_plot <- ggplot(MC_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily microcepahly cases") +
+  theme_bw()
 
+inf_1_w_v_plot <- ggplot(inf_1_w_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly infections/1000") +
+  theme_bw()
 
-# plot proportions ------------------------------------------------------------
+MC_w_v_plot <- ggplot(MC_w_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly microcepahly cases/1000") +
+  theme_bw()
 
-# it does not make sense to take the mean across patches of these 
-# if seasonality is ON
+extra_H_plot <- Ntotal_v_plot + inf_1_v_plot + MC_v_plot + inf_1_w_v_plot + 
+  MC_w_v_plot + plot_layout(ncol = 2, guides = "collect")
 
+# save
+save_plot(humans_v_plot, out_dir_3, "human_compartments", wdt = wdt_v, hgt = hgt_v)
+save_plot(extra_H_plot, out_dir_3, "extra_H_diagnostics", wdt = 18, hgt = 15)
 
-diagno_mos_prop <- c("Mwt_propinf", "Mwb_propinf", "M_propinf", "prop_wb")
-
-diagno_mos_reshaped_2 <- lapply(diagno_mos_prop, reshape_by_patch, out)
-
-y_brks <- seq(0, 1, 0.2)
-
-for (i in seq_along(diagno_mos_reshaped_2)) {
-  
-  one_dat <- diagno_mos_reshaped_2[[i]]
-  
-  one_ggttl <- diagno_mos_prop[i]
-  
-  one_plot <- ggplot(data = one_dat, aes(x = x, y = y)) +
-    geom_line(color = 'royalblue', size = 0.5) +
-    facet_wrap(~ patch) +
-    scale_x_continuous("Years", breaks = my_breaks_2, labels = my_breaks_2/364) +
-    scale_y_continuous("Proportion", 
-                       breaks = y_brks, 
-                       labels = y_brks, 
-                       limits = c(min(y_brks), max(y_brks))) +
-    ggtitle(one_ggttl) +
-    theme_bw(base_size = 10)
-  
-  out_fl_nm <- paste0(one_ggttl, ".png")
-  
-  save_plot(plot_obj = one_plot, out_pth = out_dir_1, 
-            out_fl_nm = out_fl_nm, wdt = 18, hgt = 15)
-  
-}

@@ -1,400 +1,464 @@
 
-## devtools::install_github("mrc-ide/ZikaModel")
+# devtools::install_github("mrc-ide/ZikaModel")
 
 library(ZikaModel)
 library(ggplot2)
-library(purrr)
-library(gridExtra)
+library(patchwork)
+library(dplyr)
 
 source(file.path("R", "utility_functions.R"))
-source(file.path("R", "calculate_MC_numbers.R"))
-source(file.path("R", "reshape.R"))
-source(file.path("R", "aggregate.R"))
-source(file.path("R", "post_process.R"))
-source(file.path("R", "plot_diagnostics.R"))
-source(file.path("R", "plot_layout.R"))
 
 
 # define parameters -----------------------------------------------------------
 
 
-my_id <- 2
+experiment_path <- file.path("vaccine_strategies", "experiment_1")
 
-exp_des_nm <- "experimental_design_1"
+vacc_child_cov <- 0
 
-vacc_coverage_values <- c(0, 0.5, 0.8, 1)
-
-prop_immune_values <- 0
-
-plot_parms <- list(max_x_lim = 50 * 364,
-                   break_interval = 5,
-                   line_size = 0.5)
-
-age_init <- c(1, 9, 10, 10, 10, 10, 10, 10, 10, 10, 10)
-
-deathrt <- c(1e-10,
-             1e-10,
-             1e-10,
-             0.00277068683332695,
-             0.0210680857689784,
-             0.026724997685722,
-             0.0525354529367476,
-             0.0668013582441452,
-             0.119271483740379,
-             0.279105747097929,
-             0.390197266957464)
-
-time_years <- 50 # years
-
-my_dt <- 1
-
-mr_baseline <- 0.0002
+prop_immune <- 0
 
 vacc_starttime <- 1.7  
 
 vacc_duration <- 1.5 # 0.16  
 
+vacc_stoptime <- vacc_starttime + vacc_duration  
+
 # from 9 to 49
-vacc_ages <- c(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0) 
+vaccine_child_age <- c(0, 1, 1, 1, 1, 1, 0, 0, 0, 0, 0) 
 
-odin_model_path <- system.file("extdata/odin_model_determ.R", package = "ZikaModel")
-
-diagnostics_to_save <- c("inf_1", "Ntotal", "MC")
+hgt <- 8
+wdt <- 13
+hgt_p <- 15
+wdt_p <- 18
+hgt_v <- 7
+wdt_v <- 15
+hgt_avp <- 12
+wdt_avp <- 17
 
 
 # pre processing --------------------------------------------------------------
 
 
-experiment_name <- paste0("experiment_", my_id)
-
-experiment_path <- file.path("vaccine_strategies", experiment_name, "zoom")
-
-out_fig_dir <- file.path("figures", experiment_path)
-
-out_tab_dir <- file.path("output", experiment_path)
-
-pl_ttl <- gsub("_+", " ", experiment_name)
-
-plot_type <- c("total", "by_patch", "by_vaccine", "by_age") 
-
-exp_des <- expand.grid(vacc_cov = vacc_coverage_values,
-                       prop_immune = prop_immune_values)
-
-exp_des$id <- seq_len(nrow(exp_des))
-
-exp_des_one <- exp_des[exp_des$id == my_id,]
-
-vacc_cu_cov <- exp_des_one[, "vacc_cov"]
-
-prop_immune <- exp_des_one[, "prop_immune"]
-
-integer_time_steps <- (364 * time_years) / my_dt
-
-its <- seq(0, integer_time_steps, 1)
-
-vacc_stoptime <- vacc_starttime + vacc_duration  
-
-params <- list(DT = my_dt,
-               vacc_cu_coverage = vacc_cu_cov,
-               vacc_cu_time = vacc_starttime,
-               vacc_cu_ages = vacc_ages,
-               other_prop_immune = prop_immune)
-
-
-# load data -------------------------------------------------------------------
-
-
-mr_pregn_data <- readRDS(file.path("output", "microcephaly_risk_probs.rds"))
-
-br_brazil_age <- readRDS(file.path("output", "age_specific_birth_rates.rds"))
+out_dir <- file.path("figures", experiment_path)
+out_dir_2 <- file.path(out_dir, "patch")
+out_dir_3 <- file.path(out_dir, "vaccine")
+out_dir_4 <- file.path(out_dir, "all")
 
 
 # run -------------------------------------------------------------------------
 
 
-create_generator <- create_r_model(odin_model_path = odin_model_path,
-                                   agec = age_init,
-                                   death = deathrt,
-                                   nn_links = nn_links,
-                                   amplitudes_phases = amplitudes_phases,
-                                   params = params)
-
-gen <- create_generator$generator(user = create_generator$state)
-
-mod_run <- gen$run(its)
-
-
-# post processing -------------------------------------------------------------
-
-
-out <- gen$transform_variables(mod_run)
-
-infections <- out$inf_1
-
-Ntotal <- out$Ntotal
-
-MC <- calculate_microcases(N_inf = infections, 
-                           pregnancy_risk_curve = mr_pregn_data, 
-                           birth_rates = br_brazil_age, 
-                           N_tot = Ntotal, 
-                           baseline_probM = mr_baseline)
-
-out$MC <- MC
-
-tt <- out$TIME
-
-time <- length(tt)
-
-
-# plotting --------------------------------------------------------------------
-
-
-## totals 
-
-plot_total <- c("S", "I1", "R1", "Ntotal", "births", "inf_1", "MC")
-
-plot_total_inc <- c("inf_1", "MC")
-
-plot_total_inc_lab <- paste0("w_", plot_total_inc)
-
-plot_mean <- c("Kcav", "eipav", "Deltaav", "R0t_1av", "FOI1av")
-  
-plot_total_p <- c("S", "I1", "R1", "Ntotal", "pS", "pI1", "pR1", "births", "inf_1", "MC")
-
-y_labels <- c("number", "number", "number", "number", "proportion", "proportion", 
-              "proportion", "number", "number", "number",
-              "weekly number/1000", "weekly number/1000", 
-              rep("mean patch", 5))
-
-titles <- c("Susceptibles", "Infected", "Recovered", "Total",
-            "Susceptibles", "Infected", "Recovered",
-            "Births", "New infections", "Microcephaly", 
-            "Weekly new infections", "Weekly new microcephaly",
-            "Carrying capacity", "Extrinsic Incubation Period", 
-            "Adult mosquito daily mortality rate", expression("R"["0"] * ""), 
-            "FOI (within patches)")
-
-ls_total_1 <- out[plot_total]
-
-ls_total_2 <- out[plot_total_inc]
-
-ls_mean <- out[plot_mean]
-
-to_plot_mean <- lapply(ls_mean, cbind_time, tt)
-
-names(ls_total_2) <- plot_total_inc_lab
-
-to_plot_total_1 <- lapply(ls_total_1, aggregate_and_reshape_total, tt) 
-
-pS <- calculate_SIR_proportions(to_plot_total_1$S$value, to_plot_total_1$Ntotal$value, tt)
-pI1 <- calculate_SIR_proportions(to_plot_total_1$I1$value, to_plot_total_1$Ntotal$value, tt)
-pR1 <- calculate_SIR_proportions(to_plot_total_1$R1$value, to_plot_total_1$Ntotal$value, tt)
-
-to_plot_total_1$pS <- pS
-to_plot_total_1$pI1 <- pI1
-to_plot_total_1$pR1 <- pR1
-
-to_plot_total_1a <- to_plot_total_1[plot_total]
-
-to_plot_total_2 <- lapply(ls_total_2, cumsum_and_incidence_total, Ntotal)
-
-to_plot_total <- c(to_plot_total_1a, to_plot_total_2, to_plot_mean)
-
-y_labels <- setNames(y_labels, c(plot_total_p, plot_total_inc_lab, plot_mean)) 
-
-titles <- setNames(titles, c(plot_total_p, plot_total_inc_lab, plot_mean))
-
-all_plots_total <- imap(to_plot_total, 
-                        ~ simple_plot(df = .x, 
-                                      y_lab_title = y_labels[.y],
-                                      ttl = titles[.y],
-                                      parms = plot_parms))
-
-plots_total_combined <- arrangeGrob_multi_files(all_plots_total, n_plots_per_file = 4)
-  
-
-# -----------------------------------------------------------------------------
-
-
-## by patch  
-
-plot_patch <- c("S", "I1", "R1", "Ntotal", "inf_1", "MC")
-
-plot_patch_vector <- "births"
-
-plot_patch_inc <- c("inf_1", "MC")
-
-ls_patch_1 <- out[plot_patch]
-
-ls_patch_2 <- out[plot_patch_vector]
-
-ls_patch_3 <- out[plot_patch_inc]
-
-plot_patch_inc_lab <- paste0("w_", plot_patch_inc)
-
-names(ls_patch_3) <- plot_patch_inc_lab
-
-to_plot_patch_1 <- lapply(ls_patch_1, aggregate_and_reshape_patch, tt) 
-
-to_plot_patch_2 <- lapply(ls_patch_2, melt_sim_output_array_3, tt, "patch")
-
-to_plot_patch_3 <- lapply(ls_patch_3, cumsum_and_incidence_patch, Ntotal)
-
-to_plot_patch <- c(to_plot_patch_1, to_plot_patch_2, to_plot_patch_3)
-
-y_labels <- c("number", "number", "number", "number", "number", "number", "number",
-              "weekly number/1000", "weekly number/1000")
-
-y_labels <- setNames(y_labels, c(plot_patch, plot_patch_vector, plot_patch_inc_lab)) 
-
-titles <- c("Susceptibles", "Infected", "Recovered", "Total",
-            "New infections", "Microcephaly", "Births", 
-            "Weekly new infections", "Weekly new microcephaly")
-
-titles <- setNames(titles, c(plot_patch, plot_patch_vector, plot_patch_inc_lab))
-
-all_plots_patch <- imap(to_plot_patch, 
-                        ~ plot_by_facet(df = .x,
-                                        facet_var = "patch", 
-                                        y_lab_title = y_labels[.y],
-                                        ttl = titles[.y],
-                                        parms = plot_parms))
-
-
-# -----------------------------------------------------------------------------
-
-
-## by vaccine status
-
-plot_vaccine <- c("S", "I1", "R1", "Ntotal", "inf_1", "MC")
-
-plot_vaccine_inc <- c("inf_1", "MC")
-
-ls_vaccine_1 <- out[plot_vaccine]
-
-ls_vaccine_2 <- out[plot_vaccine_inc]
-
-plot_vaccine_inc_lab <- paste0("w_", plot_vaccine_inc)
-
-names(ls_vaccine_2) <- plot_vaccine_inc_lab
-
-to_plot_vaccine_1 <- lapply(ls_vaccine_1, aggregate_and_reshape_vaccine, tt) 
-
-to_plot_vaccine_2 <- lapply(ls_vaccine_2, cumsum_and_incidence_vaccine, Ntotal)
-
-to_plot_vaccine <- c(to_plot_vaccine_1, to_plot_vaccine_2)
-
-y_labels <- c("number", "number", "number", "number", "number", "number",
-              "weekly number/1000", "weekly number/1000")
-
-y_labels <- setNames(y_labels, c(plot_vaccine, plot_vaccine_inc_lab)) 
-
-titles <- c("Susceptibles", "Infected", "Recovered", "Total",
-            "New infections", "Microcephaly",
-            "Weekly new infections", "Weekly new microcephaly")
-
-titles <- setNames(titles, c(plot_vaccine, plot_vaccine_inc_lab))
-
-all_plots_vaccine <- imap(to_plot_vaccine, 
-                          ~ plot_by_line(df = .x, 
-                                         line_var = "vaccine",
-                                         y_lab_title = y_labels[.y],
-                                         ttl = titles[.y],
-                                         parms = plot_parms))
-
-plots_vaccine_combined <- arrangeGrob_multi_files(all_plots_vaccine, 
-                                                  n_plots_per_file = 4, 
-                                                  legend = TRUE)
-
-
-# -----------------------------------------------------------------------------
-
-
-## by patch and vaccine status (for one patch)
-
-plot_age <- c("S", "I1", "R1", "Ntotal", "inf_1", "MC")
-
-plot_age_inc <- c("inf_1", "MC")
-
-ls_age_1 <- out[plot_age]
-
-ls_age_2 <- out[plot_age_inc]
-
-plot_age_inc_lab <- paste0("w_", plot_age_inc)
-
-names(ls_age_2) <- plot_age_inc_lab
-
-to_plot_age_1 <- lapply(ls_age_1, aggregate_and_reshape_age, tt) 
-
-to_plot_age_2 <- lapply(ls_age_2, cumsum_and_incidence_age, Ntotal)
-
-to_plot_age <- c(to_plot_age_1, to_plot_age_2)
-
-y_labels <- c("number", "number", "number", "number", "number", "number",
-              "weekly number/1000", "weekly number/1000")
-
-y_labels <- setNames(y_labels, c(plot_age, plot_age_inc_lab)) 
-
-titles <- c("Susceptibles", "Infected", "Recovered", "Total",
-            "New infections", "Microcephaly", 
-            "Weekly new infections", "Weekly new microcephaly")
-
-titles <- setNames(titles, c(plot_age, plot_age_inc_lab))
-
-all_plots_age <- imap(to_plot_age, 
-                      ~ plot_by_line_facet(df = .x, 
-                                           line_var = "age", 
-                                           facet_var = "vaccine",
-                                           y_lab_title = y_labels[.y],
-                                           ttl = titles[.y],
-                                           parms = plot_parms))
-
-plots_age_combined <- arrangeGrob_multi_files(all_plots_age, 
-                                              n_plots_per_file = 2,
-                                              legend = TRUE)
-
-
-# save plots ------------------------------------------------------------------
-
-
-save_01 <- imap(plots_total_combined,
-                ~ save_plot(plot_obj = .x,
-                            out_pth = out_fig_dir, 
-                            out_fl_nm = paste(plot_type[1], .y, sep = "_"), 
-                            wdt = 17, 
-                            hgt = 12))
-
-save_02 <- imap(all_plots_patch,
-                ~ save_plot(plot_obj = .x,
-                            out_pth = out_fig_dir, 
-                            out_fl_nm = paste(plot_type[2], .y, sep = "_"), 
-                            wdt = 17, 
-                            hgt = 17))
-
-save_03 <- imap(plots_vaccine_combined,
-                ~ save_plot(plot_obj = .x,
-                            out_pth = out_fig_dir, 
-                            out_fl_nm = paste(plot_type[3], .y, sep = "_"), 
-                            wdt = 17, 
-                            hgt = 12))
-
-save_04 <- imap(plots_age_combined,
-                ~ save_plot(plot_obj = .x,
-                            out_pth = out_fig_dir, 
-                            out_fl_nm = paste(plot_type[4], .y, sep = "_"), 
-                            wdt = 17, 
-                            hgt = 12))
-
-
-# save rds --------------------------------------------------------------------
-
-
-rds_out <- out[diagnostics_to_save]
-
-write_out_rds(rds_out, out_tab_dir, paste0("diagnostics_", my_id))                
-
-                           
-# save tables -----------------------------------------------------------------
-
-
-write_out_csv(exp_des, file.path("output", "vaccine_strategies"), exp_des_nm) 
+r1 <- run_deterministic_model(time_period = 365 * 5,
+                              vacc_child_coverage = vacc_child_cov,
+                              vacc_child_starttime = vacc_starttime,
+                              vacc_child_stoptime = vacc_stoptime,
+                              vaccine_child_age = vaccine_child_age,
+                              other_prop_immune = prop_immune)
+
+
+# plot totals -----------------------------------------------------------------
+
+
+## format
+Ntotal <- format_output_H(r1, var_select = "Ntotal")
+inf_1 <- format_output_H(r1, var_select = "inf_1")
+MC <- format_output_H(r1, var_select = "MC")
+inf_1_w <- format_output_H(r1, var_select = "inf_1_w")
+MC_w <- format_output_H(r1, var_select = "MC_w")
+
+Lwt <- format_output_M(r1, var_select = "Lwt")
+Kc <- format_output_M(r1, var_select = "Kc")
+eip <- format_output_M(r1, var_select = "eip")
+Delta <- format_output_M(r1, var_select = "Delta")
+Rt1 <- format_output_M(r1, var_select = "R0t_1")
+FOI1 <- format_output_M(r1, var_select = "FOI1")
+
+# plot
+humans_plot <- plot(r1, type = "H")
+mosquitoes_plot <- plot(r1, type = "M")
+
+Ntotal_plot <- ggplot(Ntotal, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Total number of humans") +
+  theme_bw()
+
+inf_1_plot <- ggplot(inf_1, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily infections") +
+  theme_bw()
+
+MC_plot <- ggplot(MC, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily microcepahly cases") +
+  theme_bw()
+
+inf_1_w_plot <- ggplot(inf_1_w, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly infections/1000") +
+  theme_bw()
+
+MC_w_plot <- ggplot(MC_w, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly microcepahly cases/1000") +
+  theme_bw()
+
+extra_H_plot <- Ntotal_plot + inf_1_plot + MC_plot + inf_1_w_plot + MC_w_plot +
+  plot_layout(ncol = 2)
+
+Lwt_plot <- ggplot(Lwt, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Larvae wild type") +
+  theme_bw()
+
+Kc_plot <- ggplot(Kc, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Mosquito larvae carrying capacity") +
+  theme_bw()
+
+eip_plot <- ggplot(eip, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Extrinsic Incubation Period") +
+  theme_bw()
+
+Delta_plot <- ggplot(Delta, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Adult mosquito daily mortality rate") +
+  theme_bw()
+
+Rt1_plot <- ggplot(Rt1, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Time-varying ZIKV reprodution number") +
+  theme_bw()
+
+FOI1_plot <- ggplot(FOI1, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Mean across patches") +
+  ggtitle("Force of Infection") +
+  theme_bw()
+
+extra_M_plot <- Lwt_plot + Kc_plot + eip_plot + 
+  Delta_plot + Rt1_plot + FOI1_plot + plot_layout(ncol = 2)
+
+# save
+save_plot(humans_plot, out_dir, "human_compartments", wdt = wdt, hgt = hgt)
+save_plot(mosquitoes_plot, out_dir, "mosquitoes_compartments", wdt = wdt, hgt = hgt)
+save_plot(extra_H_plot, out_dir, "extra_H_diagnostics", wdt = 18, hgt = 15)
+save_plot(extra_M_plot, out_dir, "extra_M_diagnostics", wdt = 18, hgt = 15)
+
+
+# plot by patch ---------------------------------------------------------------
+
+
+# format 
+Ntotal_p <- format_output_H(r1, var_select = "Ntotal", keep = "patch")
+inf_1_p <- format_output_H(r1, var_select = "inf_1", keep = "patch")
+MC_p <- format_output_H(r1, var_select = "MC", keep = "patch")
+inf_1_w_p <- format_output_H(r1, var_select = "inf_1_w", keep = "patch")
+MC_w_p <- format_output_H(r1, var_select = "MC_w", keep = "patch")
+
+Lwt_p <- format_output_M(r1, var_select = "Lwt", keep = "patch")
+Kc_p <- format_output_M(r1, var_select = "Kc", keep = "patch")
+eip_p <- format_output_M(r1, var_select = "eip", keep = "patch")
+Delta_p <- format_output_M(r1, var_select = "Delta", keep = "patch")
+Rt1_p <- format_output_M(r1, var_select = "R0t_1", keep = "patch")
+FOI1_p <- format_output_M(r1, var_select = "FOI1", keep = "patch")
+
+# plot
+humans_p_plot <- plot(r1, type = "H", keep = "patch")
+mosquitoes_p_plot <- plot(r1, type = "M", keep = "patch")
+
+Ntotal_p_plot <- ggplot(Ntotal_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Total number of humans") +
+  theme_bw()
+
+inf_1_p_plot <- ggplot(inf_1_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily infections") +
+  theme_bw()
+
+MC_p_plot <- ggplot(MC_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily microcepahly cases") +
+  theme_bw()
+
+inf_1_w_p_plot <- ggplot(inf_1_w_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly infections/1000") +
+  theme_bw()
+
+MC_w_p_plot <- ggplot(MC_w_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly microcepahly cases/1000") +
+  theme_bw()
+
+Lwt_p_plot <- ggplot(Lwt_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Larvae wild type") +
+  theme_bw()
+
+Kc_p_plot <- ggplot(Kc_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Kc") +
+  ggtitle("Mosquito larvae carrying capacity") +
+  theme_bw()
+
+eip_p_plot <- ggplot(eip_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("EIP") +
+  ggtitle("Extrinsic Incubation Period") +
+  theme_bw()
+
+Delta_p_plot <- ggplot(Delta_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Delta") +
+  ggtitle("Adult mosquito daily mortality rate") +
+  theme_bw()
+
+Rt1_p_plot <- ggplot(Rt1_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("Rt") +
+  ggtitle("Time-varying ZIKV reprodution number") +
+  theme_bw()
+
+FOI1_p_plot <- ggplot(FOI1_p, aes(x = t, y = y)) +
+  geom_line(color = 'royalblue', size = 0.5) +
+  facet_wrap(~ patch) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("FOI") +
+  ggtitle("Force of Infection") +
+  theme_bw()
+
+# save
+save_plot(humans_p_plot, out_dir_2, "human_compartments", wdt = wdt_p, hgt = hgt_p)
+save_plot(mosquitoes_p_plot, out_dir_2, "mosquitoes_compartments", wdt = wdt_p, hgt = hgt_p)
+save_plot(Ntotal_p_plot, out_dir_2, "Ntotal", wdt = wdt_p, hgt = hgt_p)
+save_plot(inf_1_p_plot, out_dir_2, "inf_1", wdt = wdt_p, hgt = hgt_p)
+save_plot(MC_p_plot, out_dir_2, "MC", wdt = wdt_p, hgt = hgt_p)
+save_plot(inf_1_w_p_plot, out_dir_2, "inf_1_w", wdt = wdt_p, hgt = hgt_p)
+save_plot(MC_w_p_plot, out_dir_2, "MC_w", wdt = wdt_p, hgt = hgt_p)
+save_plot(Lwt_p_plot, out_dir_2, "Lwt", wdt = wdt_p, hgt = hgt_p)
+save_plot(Kc_p_plot, out_dir_2, "Kc", wdt = wdt_p, hgt = hgt_p)
+save_plot(eip_p_plot, out_dir_2, "eip", wdt = wdt_p, hgt = hgt_p)
+save_plot(Delta_p_plot, out_dir_2, "Delta", wdt = wdt_p, hgt = hgt_p)
+save_plot(Rt1_p_plot, out_dir_2, "Rt", wdt = wdt_p, hgt = hgt_p)
+save_plot(FOI1_p_plot, out_dir_2, "FOI", wdt = wdt_p, hgt = hgt_p)
+
+
+# plot by vaccine status ------------------------------------------------------
+
+
+# format 
+Ntotal_v <- format_output_H(r1, var_select = "Ntotal", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+inf_1_v <- format_output_H(r1, var_select = "inf_1", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+MC_v <- format_output_H(r1, var_select = "MC", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+inf_1_w_v <- format_output_H(r1, var_select = "inf_1_w", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+MC_w_v <- format_output_H(r1, var_select = "MC_w", keep = "vaccine") %>%
+  mutate(vaccine = factor(vaccine))
+
+# plot
+humans_v_plot <- plot(r1, type = "H", keep = "vaccine")
+
+Ntotal_v_plot <- ggplot(Ntotal_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Total number of humans") +
+  theme_bw()
+
+inf_1_v_plot <- ggplot(inf_1_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily infections") +
+  theme_bw()
+
+MC_v_plot <- ggplot(MC_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily microcepahly cases") +
+  theme_bw()
+
+inf_1_w_v_plot <- ggplot(inf_1_w_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly infections/1000") +
+  theme_bw()
+
+MC_w_v_plot <- ggplot(MC_w_v, aes(x = t, y = y, col = vaccine)) +
+  geom_line(size = 0.5) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly microcepahly cases/1000") +
+  theme_bw()
+
+extra_H_plot <- Ntotal_v_plot + inf_1_v_plot + MC_v_plot + inf_1_w_v_plot + 
+  MC_w_v_plot + plot_layout(ncol = 2, guides = "collect")
+
+# save
+save_plot(humans_v_plot, out_dir_3, "human_compartments", wdt = wdt_v, hgt = hgt_v)
+save_plot(extra_H_plot, out_dir_3, "extra_H_diagnostics", wdt = 18, hgt = 15)
+
+
+# plot by age, vaccine status and patch ---------------------------------------
+
+
+# format 
+patch_id <- 1
+S_avp <- format_output_H(r1, var_select = "S", keep = "all", patch_id = patch_id)
+I_avp <- format_output_H(r1, var_select = "I1", keep = "all", patch_id = patch_id)
+R_avp <- format_output_H(r1, var_select = "R1", keep = "all", patch_id = patch_id)
+Ntotal_avp <- format_output_H(r1, var_select = "Ntotal", keep = "all", patch_id = patch_id)
+inf_1_avp <- format_output_H(r1, var_select = "inf_1", keep = "all", patch_id = patch_id)
+MC_avp <- format_output_H(r1, var_select = "MC", keep = "all", patch_id = patch_id)
+inf_1_w_avp <- format_output_H(r1, var_select = "inf_1_w", keep = "all", patch_id = patch_id)
+MC_w_avp <- format_output_H(r1, var_select = "MC_w", keep = "all", patch_id = patch_id)
+
+# plot
+S_avp_plot <- ggplot(S_avp, aes(x = t, y = y, col = age)) +
+  geom_line(size = 0.5) +
+  facet_wrap(~ vaccine, ncol = 1) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Susceptibles") +
+  theme_bw()
+
+I_avp_plot <- ggplot(I_avp, aes(x = t, y = y, col = age)) +
+  geom_line(size = 0.5) +
+  facet_wrap(~ vaccine, ncol = 1) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Infectious") +
+  theme_bw()
+
+avp_plot_1 <- S_avp_plot + I_avp_plot + 
+  plot_layout(ncol = 2, guides = "collect") + 
+  plot_annotation(theme = theme(plot.margin = unit(c(0,0,0,0), "cm"))) & 
+  theme(legend.position = 'bottom') &
+  guides(colour = guide_legend(nrow = 1))
+
+R_avp_plot <- ggplot(R_avp, aes(x = t, y = y, col = age)) +
+  geom_line(size = 0.5) +
+  facet_wrap(~ vaccine, ncol = 1) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Recovered") +
+  theme_bw()
+
+Ntotal_avp_plot <- ggplot(Ntotal_avp, aes(x = t, y = y, col = age)) +
+  geom_line(size = 0.5) +
+  facet_wrap(~ vaccine, ncol = 1) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Total number of humans") +
+  theme_bw()
+
+avp_plot_2 <- R_avp_plot + Ntotal_avp_plot + 
+  plot_layout(ncol = 2, guides = "collect") + 
+  plot_annotation(theme = theme(plot.margin = unit(c(0,0,0,0), "cm"))) & 
+  theme(legend.position = 'bottom') &
+  guides(colour = guide_legend(nrow = 1))
+
+inf_1_avp_plot <- ggplot(inf_1_avp, aes(x = t, y = y, col = age)) +
+  geom_line(size = 0.5) +
+  facet_wrap(~ vaccine, ncol = 1) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily infections") +
+  theme_bw()
+
+MC_avp_plot <- ggplot(MC_avp, aes(x = t, y = y, col = age)) +
+  geom_line(size = 0.5) +
+  facet_wrap(~ vaccine, ncol = 1) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Daily microcepahly cases") +
+  theme_bw()
+
+avp_plot_3 <- inf_1_avp_plot + MC_avp_plot + 
+  plot_layout(ncol = 2, guides = "collect") + 
+  plot_annotation(theme = theme(plot.margin = unit(c(0,0,0,0), "cm"))) & 
+  theme(legend.position = 'bottom') &
+  guides(colour = guide_legend(nrow = 1))
+
+inf_1_w_avp_plot <- ggplot(inf_1_w_avp, aes(x = t, y = y, col = age)) +
+  geom_line(size = 0.5) +
+  facet_wrap(~ vaccine, ncol = 1) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly infections") +
+  theme_bw()
+
+MC_w_avp_plot <- ggplot(MC_w_avp, aes(x = t, y = y, col = age)) +
+  geom_line(size = 0.5) +
+  facet_wrap(~ vaccine, ncol = 1) +
+  scale_x_continuous("Time") +
+  scale_y_continuous("N") +
+  ggtitle("Weekly microcepahly cases") +
+  theme_bw()
+
+avp_plot_4 <- inf_1_w_avp_plot + MC_w_avp_plot + 
+  plot_layout(ncol = 2, guides = "collect") + 
+  plot_annotation(theme = theme(plot.margin = unit(c(0,0,0,0), "cm"))) & 
+  theme(legend.position = 'bottom') &
+  guides(colour = guide_legend(nrow = 1))
+
+# save
+save_plot(avp_plot_1, out_dir_4, "avp_plot_1", wdt = wdt_avp, hgt = hgt_avp)
+save_plot(avp_plot_2, out_dir_4, "avp_plot_2", wdt = wdt_avp, hgt = hgt_avp)
+save_plot(avp_plot_3, out_dir_4, "avp_plot_3", wdt = wdt_avp, hgt = hgt_avp)
+save_plot(avp_plot_4, out_dir_4, "avp_plot_4", wdt = wdt_avp, hgt = hgt_avp)

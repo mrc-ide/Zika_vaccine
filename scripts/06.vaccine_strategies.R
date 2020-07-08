@@ -96,7 +96,7 @@ MC_plot <- ggplot(MC, aes(x = t, y = y)) +
   geom_line(color = 'royalblue', size = 0.5) +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
-  ggtitle("Daily microcepahly cases") +
+  ggtitle("Daily microcephaly cases") +
   theme_bw()
 
 inf_1_w_plot <- ggplot(inf_1_w, aes(x = t, y = y)) +
@@ -110,7 +110,7 @@ MC_w_plot <- ggplot(MC_w, aes(x = t, y = y)) +
   geom_line(color = 'royalblue', size = 0.5) +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
-  ggtitle("Weekly microcepahly cases/1000") +
+  ggtitle("Weekly microcephaly cases/1000") +
   theme_bw()
 
 extra_H_plot <- Ntotal_plot + inf_1_plot + MC_plot + inf_1_w_plot + MC_w_plot +
@@ -210,7 +210,7 @@ MC_p_plot <- ggplot(MC_p, aes(x = t, y = y)) +
   facet_wrap(~ patch) +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
-  ggtitle("Daily microcepahly cases") +
+  ggtitle("Daily microcephaly cases") +
   theme_bw()
 
 inf_1_w_p_plot <- ggplot(inf_1_w_p, aes(x = t, y = y)) +
@@ -226,7 +226,7 @@ MC_w_p_plot <- ggplot(MC_w_p, aes(x = t, y = y)) +
   facet_wrap(~ patch) +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
-  ggtitle("Weekly microcepahly cases/1000") +
+  ggtitle("Weekly microcephaly cases/1000") +
   theme_bw()
 
 Lwt_p_plot <- ggplot(Lwt_p, aes(x = t, y = y)) +
@@ -329,7 +329,7 @@ MC_v_plot <- ggplot(MC_v, aes(x = t, y = y, col = vaccine)) +
   geom_line(size = 0.5) +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
-  ggtitle("Daily microcepahly cases") +
+  ggtitle("Daily microcephaly cases") +
   theme_bw()
 
 inf_1_w_v_plot <- ggplot(inf_1_w_v, aes(x = t, y = y, col = vaccine)) +
@@ -343,7 +343,7 @@ MC_w_v_plot <- ggplot(MC_w_v, aes(x = t, y = y, col = vaccine)) +
   geom_line(size = 0.5) +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
-  ggtitle("Weekly microcepahly cases/1000") +
+  ggtitle("Weekly microcephaly cases/1000") +
   theme_bw()
 
 extra_H_plot <- Ntotal_v_plot + inf_1_v_plot + MC_v_plot + inf_1_w_v_plot + 
@@ -371,7 +371,7 @@ MC_w_avp <- format_output_H(r1, var_select = "MC_w", keep = "all", patch_id = pa
 # plot
 S_avp_plot <- ggplot(S_avp, aes(x = t, y = y, col = age)) +
   geom_line(size = 0.5) +
-  facet_wrap(~ vaccine, ncol = 1) +
+  facet_wrap(~ vaccine, ncol = 1, scales = "free_y") +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
   ggtitle("Susceptibles") +
@@ -379,7 +379,7 @@ S_avp_plot <- ggplot(S_avp, aes(x = t, y = y, col = age)) +
 
 I_avp_plot <- ggplot(I_avp, aes(x = t, y = y, col = age)) +
   geom_line(size = 0.5) +
-  facet_wrap(~ vaccine, ncol = 1) +
+  facet_wrap(~ vaccine, ncol = 1, scales = "free_y") +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
   ggtitle("Infectious") +
@@ -393,7 +393,7 @@ avp_plot_1 <- S_avp_plot + I_avp_plot +
 
 R_avp_plot <- ggplot(R_avp, aes(x = t, y = y, col = age)) +
   geom_line(size = 0.5) +
-  facet_wrap(~ vaccine, ncol = 1) +
+  facet_wrap(~ vaccine, ncol = 1, scales = "free_y") +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
   ggtitle("Recovered") +
@@ -401,7 +401,7 @@ R_avp_plot <- ggplot(R_avp, aes(x = t, y = y, col = age)) +
 
 Ntotal_avp_plot <- ggplot(Ntotal_avp, aes(x = t, y = y, col = age)) +
   geom_line(size = 0.5) +
-  facet_wrap(~ vaccine, ncol = 1) +
+  facet_wrap(~ vaccine, ncol = 1, scales = "free_y") +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
   ggtitle("Total number of humans") +
@@ -415,7 +415,7 @@ avp_plot_2 <- R_avp_plot + Ntotal_avp_plot +
 
 inf_1_avp_plot <- ggplot(inf_1_avp, aes(x = t, y = y, col = age)) +
   geom_line(size = 0.5) +
-  facet_wrap(~ vaccine, ncol = 1) +
+  facet_wrap(~ vaccine, ncol = 1, scales = "free_y") +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
   ggtitle("Daily infections") +
@@ -423,10 +423,10 @@ inf_1_avp_plot <- ggplot(inf_1_avp, aes(x = t, y = y, col = age)) +
 
 MC_avp_plot <- ggplot(MC_avp, aes(x = t, y = y, col = age)) +
   geom_line(size = 0.5) +
-  facet_wrap(~ vaccine, ncol = 1) +
+  facet_wrap(~ vaccine, ncol = 1, scales = "free_y") +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
-  ggtitle("Daily microcepahly cases") +
+  ggtitle("Daily microcephaly cases") +
   theme_bw()
 
 avp_plot_3 <- inf_1_avp_plot + MC_avp_plot + 
@@ -437,7 +437,7 @@ avp_plot_3 <- inf_1_avp_plot + MC_avp_plot +
 
 inf_1_w_avp_plot <- ggplot(inf_1_w_avp, aes(x = t, y = y, col = age)) +
   geom_line(size = 0.5) +
-  facet_wrap(~ vaccine, ncol = 1) +
+  facet_wrap(~ vaccine, ncol = 1, scales = "free_y") +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
   ggtitle("Weekly infections") +
@@ -445,10 +445,10 @@ inf_1_w_avp_plot <- ggplot(inf_1_w_avp, aes(x = t, y = y, col = age)) +
 
 MC_w_avp_plot <- ggplot(MC_w_avp, aes(x = t, y = y, col = age)) +
   geom_line(size = 0.5) +
-  facet_wrap(~ vaccine, ncol = 1) +
+  facet_wrap(~ vaccine, ncol = 1, scales = "free_y") +
   scale_x_continuous("Time") +
   scale_y_continuous("N") +
-  ggtitle("Weekly microcepahly cases") +
+  ggtitle("Weekly microcephaly cases") +
   theme_bw()
 
 avp_plot_4 <- inf_1_w_avp_plot + MC_w_avp_plot + 

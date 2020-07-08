@@ -18,7 +18,7 @@ vacc_child_cov <- 0
 
 prop_immune <- 0
 
-vacc_starttime <- 1.7  
+vacc_starttime <- 1.3  
 
 vacc_duration <- 1.5 # 0.16  
 

@@ -33,7 +33,9 @@ cbind_id_time <- function(x, id, time) {
 
 cbind_id <- function(x, id) {
   
-  cbind(x, id = id)
+  x$id <- sprintf("%02d", id)
+  
+  x
 
 }
 

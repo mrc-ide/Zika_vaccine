@@ -162,7 +162,7 @@ for (i in seq_along(measure_values)) {
     save_plot(plot_obj = p,
               out_pth = out_fig_path,
               out_fl_nm = sprintf("summary_factorial_%s_%s", mes, k),
-              wdt = 17,
+              wdt = 18,
               hgt = my_hgt)
     
   }

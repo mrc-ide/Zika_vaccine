@@ -69,16 +69,16 @@ wrapper_vaccine_factorial <- function(x,
   vacc_child_cov <- x$vacc_cov
   target_pop <- x$target_pop
   vacc_duration <- x$duration
-  prop_imm <- x$prop_imm
+  prop_immune <- x$prop_imm
   
   message("ID = ", id)
   message("coverage = ", vacc_child_cov)
   message("target population = " , target_pop)
   message("duration = ", vacc_duration)
-  message("existing immunity = ", prop_imm)  
+  message("existing immunity = ", prop_immune)  
   
   
-  message("--------------------------------------------------------------------/n")
+  message("--------------------------------------------------------------------\n")
   
   
   if(!is.null(parms)) {

@@ -58,15 +58,12 @@ get_vacc_start_time <- function(preexisting_immunity_level) {
   
 }
 
-wrapper_multi_factors_ZikaModel_2 <- function(x,
-                                              agec, 
-                                              death,
-                                              parms = NULL,
-                                              integer_time_steps,
-                                              var_save = NULL,
-                                              out_dir) {
+wrapper_vaccine_factorial <- function(x,
+                                      parms = NULL,
+                                      integer_time_steps,
+                                      out_dir) {
   
-  browser()
+  #browser()
   
   id <- x$id
   vacc_child_cov <- x$vacc_cov
@@ -81,63 +78,54 @@ wrapper_multi_factors_ZikaModel_2 <- function(x,
   message("existing immunity = ", prop_imm)  
   
   
-  message("--------------------------------------------------------------------")
+  message("--------------------------------------------------------------------/n")
   
   
   if(!is.null(parms)) {
     
-    factorial_params <- list(vacc_child_coverage = vacc_child_cov,
-                             vacc_child_stoptime = vacc_starttime,
-                             vacceff_prim = vacc_eff,
-                             other_prop_immune = prop_imm)
-    
-    params <- c(parms, factorial_params)
+    vacc_starttime <- parms$vacc_starttime
     
   } else {
     
     vacc_starttime <- get_vacc_start_time(prop_imm)
     
-    vacc_stoptime <- vacc_starttime + vacc_duration
+  }  
+  
+  vacc_stoptime <- vacc_starttime + vacc_duration
+  
+  vaccine_child_age <- vaccine_target_code_to_age(target_pop)
+  
+  time_period <- parms$time_period
+  
+  r1 <- run_deterministic_model(time_period = 365 * time_period,
+                                vacc_child_coverage = vacc_child_cov,
+                                vacc_child_starttime = vacc_starttime,
+                                vacc_child_stoptime = vacc_stoptime,
+                                vaccine_child_age = vaccine_child_age,
+                                other_prop_immune = prop_immune)
+
+  
+  out <- format_output_H(r1, var_select = c("inf_1_w", "MC_w"))
     
-    params <- list(vacc_child_starttime = vacc_starttime,
-                   vacc_child_coverage = vacc_child_cov,
-                   vacc_child_stoptime = vacc_stoptime,
-                   vacceff_prim = vacc_eff,
-                   other_prop_immune = prop_imm)
-    
-  }
-  
-  vaccine_ages <- vaccine_target_code_to_age(target_pop)
-  
-  create_generator <- ZikaModel::create_r_model(odin_model_path = odin_model_path,
-                                                agec = agec,
-                                                death = death,
-                                                nn_links = nn_links,
-                                                amplitudes_phases,
-                                                #vaccine_age = vaccine_ages,
-                                                params = params)
-  
-  gen <- create_generator$generator(user = create_generator$state)
-  
-  mod_run <- gen$run(integer_time_steps)
-  
-  out <- gen$transform_variables(mod_run)
-  
-  infections <- out$inf_1
-  
-  Ntotal <- out$Ntotal
-  
-  MC <- calculate_microcases(N_inf = infections, 
-                             pregnancy_risk_curve = mr_pregn_risk, 
-                             birth_rates = birth_rates, 
-                             N_tot = Ntotal, 
-                             baseline_probM = mr_baseline)
-  
-  out$MC <- MC
-  
-  if(!is.null(var_save)) out <- out[var_save]
-  
   write_out_rds(out, out_dir, paste0("diagnostics_", id)) 
   
 }
 
+vacc_strategies_post_processing <- function(x, id, time) {
+  
+  out_1 <- cbind_id_time(x = x[, "inf_1"], id = id, time = time)
+  
+  names(out_1)[names(out_1) == "value"] <- "inf_1"
+  
+  out_2 <- cbind(out_1, MC = x[, "MC"], Ntotal = x[, "Ntotal"])
+  
+  out_3 <- cumsum(out_2[, "inf_1"])
+  
+  out_4 <- cumsum(out_2[, "MC"])
+  
+  out_2$inf_1_IR <- calculate_incidence(out_3, out_2$Ntotal, time_window = 7)
+  
+  out_2$MC_IR <- calculate_incidence(out_4, out_2$Ntotal, time_window = 7) 
+  
+  out_2
+}

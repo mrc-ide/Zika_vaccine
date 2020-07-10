@@ -34,7 +34,7 @@ exp_des <- read.csv(file.path("output",
 
 experiment_name <- paste0("factorial_", experiment_no)
 
-experiment_path <- file.path("vaccine_strategies", experiment_name)
+experiment_path <- file.path("vaccine_strategies", "routine", experiment_name)
 
 data_path <- file.path("output", experiment_path)
 

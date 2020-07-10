@@ -12,7 +12,7 @@ source(file.path("R", "utility_functions.R"))
 # define parameters -----------------------------------------------------------
 
 
-experiment_path <- file.path("vaccine_strategies", "experiment_1")
+experiment_path <- file.path("vaccine_strategies", "routine", "experiment_1")
 
 vacc_child_cov <- 0
 

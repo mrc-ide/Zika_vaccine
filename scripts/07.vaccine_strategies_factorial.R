@@ -72,7 +72,7 @@ prop_immune_values <- c(0, 0.25, 0.5)
 
 experiment_name <- paste0("factorial_", experiment_no)
   
-experiment_path <- file.path("vaccine_strategies", experiment_name)
+experiment_path <- file.path("vaccine_strategies", "routine", experiment_name)
 
 out_tab_dir <- file.path("output", experiment_path)
 

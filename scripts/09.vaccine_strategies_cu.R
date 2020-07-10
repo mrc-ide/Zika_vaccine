@@ -18,7 +18,7 @@ vacc_cu_cov <- 0
 
 prop_immune <- 0
 
-vacc_starttime <- 1.7  
+vacc_starttime <- 1.3  
 
 hgt <- 8
 wdt <- 13

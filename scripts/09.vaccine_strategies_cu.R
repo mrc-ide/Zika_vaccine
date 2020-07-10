@@ -453,5 +453,3 @@ save_plot(avp_plot_1, out_dir_4, "avp_plot_1", wdt = wdt_avp, hgt = hgt_avp)
 save_plot(avp_plot_2, out_dir_4, "avp_plot_2", wdt = wdt_avp, hgt = hgt_avp)
 save_plot(avp_plot_3, out_dir_4, "avp_plot_3", wdt = wdt_avp, hgt = hgt_avp)
 save_plot(avp_plot_4, out_dir_4, "avp_plot_4", wdt = wdt_avp, hgt = hgt_avp)
-
-

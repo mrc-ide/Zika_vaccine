@@ -12,9 +12,9 @@ source(file.path("R", "utility_functions.R"))
 # define parameters -----------------------------------------------------------
 
 
-experiment_path <- file.path("vaccine_strategies", "campaign", "experiment_1")
+experiment_path <- file.path("vaccine_strategies", "campaign", "experiment_2_long")
 
-vacc_cu_cov <- 0
+vacc_cu_cov <- 0.5
 
 prop_immune <- 0
 
@@ -42,7 +42,7 @@ out_dir_4 <- file.path(out_dir, "all")
 # run -------------------------------------------------------------------------
 
 
-r1 <- run_deterministic_model(time_period = 365 * 5,
+r1 <- run_deterministic_model(time_period = 365 * 50,
                               vacc_cu_coverage = vacc_cu_cov,
                               vacc_cu_time = vacc_starttime,
                               other_prop_immune = prop_immune)
